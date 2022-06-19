@@ -5,6 +5,7 @@ import { PCFShadowMap } from 'three'
 import RotaryKnob from './components/Rotary/RotaryKnob/RotaryKnob'
 import RotarySwitch from './components/Rotary/RotarySwitch/RotarySwitch'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
+import SlideSwitch from './components/Switch/SlideSwitch/SlideSwitch'
 
 export const Orbit = createContext<MutableRefObject<any> | null>(null)
 
@@ -62,11 +63,14 @@ const App = () => {
 
         <Orbit.Provider value={orbitControls}>
           <RotaryKnob 
-            position={[-1.5, 0, 0]}
-            />
+            position={[-2, 0, 0]}
+          />
           <RotarySwitch 
             initialValues={initialSwitchState}
-            position={[1.5, 0, 0]}
+            position={[2, 0, 0]}
+          />
+          <SlideSwitch
+            position={[0, 0, 0]}
           />
         </Orbit.Provider>
       </Canvas>

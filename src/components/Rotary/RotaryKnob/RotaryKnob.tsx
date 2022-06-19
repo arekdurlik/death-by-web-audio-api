@@ -5,7 +5,7 @@ import { Orbit } from '../../../App'
 import { getInitialRotation, getTaperedValue } from '../utils'
 import { initializeKnob } from './utils'
 import { KnobProps } from './types'
-import { handleInteraction } from '../utils'
+import { handleInteraction } from '../../utils'
 
 const RotaryKnob: FC<KnobProps> = ({ 
   onChange, 
@@ -22,7 +22,7 @@ const RotaryKnob: FC<KnobProps> = ({
   }, [])
 
   const bind = useGesture({
-    /* @ts-ignore Property 'delta' does not exist */
+    /* @ts-ignore Property does not exist */
     onDrag: ({ event, delta: [dx] }) => {
       event.stopPropagation()
 
@@ -41,22 +41,20 @@ const RotaryKnob: FC<KnobProps> = ({
   })
 
   return (
-    <>
-      <group 
-        ref={knob} 
-        {...bind() as any} 
-        {...props}
-      >
-        <mesh>
-          <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
-          <meshLambertMaterial color="yellow"/>
-        </mesh>
-        <mesh position={[0, 0.5, -0.5]}>
-          <boxBufferGeometry args={[0.2, 0.1, 1]}/>
-          <meshBasicMaterial color="white"/>
-        </mesh>
-      </group>
-    </>
+    <group 
+      ref={knob} 
+      {...bind() as any} 
+      {...props}
+    >
+      <mesh>
+        <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
+        <meshLambertMaterial color="yellow"/>
+      </mesh>
+      <mesh position={[0, 0.5, -0.5]}>
+        <boxBufferGeometry args={[0.2, 0.1, 1]}/>
+        <meshBasicMaterial color="white"/>
+      </mesh>
+    </group>
   )
 }
 

@@ -6,7 +6,7 @@ import { Orbit } from '../../../App'
 import { getSteps } from './utils'
 import { initializeSwitch } from './utils'
 import { SwitchProps } from './types'
-import { handleInteraction } from '../utils'
+import { handleInteraction } from '../../utils'
 import { useSpring, a } from '@react-spring/three'
 
 const RotarySwitch: FC<SwitchProps> = ({ 
@@ -27,7 +27,7 @@ const RotarySwitch: FC<SwitchProps> = ({
   }, [])
 
   const bind = useGesture({
-    /* @ts-ignore Property 'delta' does not exist */
+    /* @ts-ignore Property does not exist */
     onDrag: ({ down, event, direction: [dx] }) => {
       event.stopPropagation()
 
@@ -55,22 +55,20 @@ const RotarySwitch: FC<SwitchProps> = ({
   })
 
   return (
-    <>
-      <a.group 
-        rotation-y={rotation} 
-        {...bind() as any} 
-        {...props}
-      >
-        <mesh>
-          <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
-          <meshLambertMaterial color="hotpink"/>
-        </mesh>
-        <mesh position={[0, 0.5, -0.5]}>
-          <boxBufferGeometry args={[0.2, 0.1, 1]}/>
-          <meshBasicMaterial color="white"/>
-        </mesh>
-      </a.group>
-    </>
+    <a.group 
+      rotation-y={rotation} 
+      {...bind() as any} 
+      {...props}
+    >
+      <mesh>
+        <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
+        <meshLambertMaterial color="hotpink"/>
+      </mesh>
+      <mesh position={[0, 0.5, -0.5]}>
+        <boxBufferGeometry args={[0.2, 0.1, 1]}/>
+        <meshBasicMaterial color="white"/>
+      </mesh>
+    </a.group>
   )
 }
 
