@@ -1,21 +1,21 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useContext, useEffect, useRef } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { useState } from 'react'
 import { clamp } from 'three/src/math/MathUtils'
-import { Orbit } from '../../../App'
-import { getSteps } from './utils'
+import { getSteps } from '../../utils'
 import { initializeSwitch } from './utils'
 import { SwitchProps } from './types'
 import { handleInteraction } from '../../utils'
 import { useSpring, a } from '@react-spring/three'
+import { useOrbit } from '../../Canvas/OrbitContext'
 
 const RotarySwitch: FC<SwitchProps> = ({ 
   onChange, 
-  initialValues, 
+  defaults, 
   ...props 
 }) => {
-  const { minVal, maxVal, base, steps, torque, minRad, maxRad } = initializeSwitch(initialValues!)
-  const orbitControls = useContext(Orbit)
+  const { minVal, maxVal, base, steps, torque, minRad, maxRad } = initializeSwitch(defaults)
+  const orbit = useOrbit()
   const [stepRotations, setStepRotations] = useState<Array<number>>([])
   const [stepValues, setStepValues] = useState<Array<number>>([])
   const [step, setStep] = useState(base)
@@ -46,12 +46,12 @@ const RotarySwitch: FC<SwitchProps> = ({
         return newStep
       })
     },
-    ...handleInteraction(orbitControls)
+    ...handleInteraction(orbit.current)
   })
 
   const { rotation } = useSpring({
     rotation: stepRotations[step],
-    config: { mass: 1, tension: 2000, friction: 0, precision: 0.05, bounce: 0 }
+    config: { mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0 }
   })
 
   return (

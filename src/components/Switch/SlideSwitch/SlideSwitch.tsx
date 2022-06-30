@@ -1,20 +1,20 @@
 import { useSpring, a } from '@react-spring/three'
-import { FC, useContext, useEffect, useRef, useState } from 'react'
-import { getSteps } from '../../Rotary/RotarySwitch/utils'
+import { FC, useEffect, useRef, useState } from 'react'
+import { getSteps } from '../../utils'
 import { SlideProps } from './types'
 import { initializeSlideSwitch } from './utils'
 import { handleInteraction } from '../../utils'
 import { useGesture } from '@use-gesture/react'
-import { Orbit } from '../../../App'
 import { clamp } from 'three/src/math/MathUtils'
+import { useOrbit } from '../../Canvas/OrbitContext'
 
 const SlideSwitch: FC<SlideProps> = ({
   onChange, 
-  initialValues, 
+  defaults, 
   ...props 
 }) => {
-  const { minVal, maxVal, base, steps, torque } = initializeSlideSwitch(initialValues!)
-  const orbitControls = useContext(Orbit)
+  const { minVal, maxVal, base, steps, torque } = initializeSlideSwitch(defaults)
+  const orbit = useOrbit()
   const [stepPositions, setStepPositions] = useState<Array<number>>([])
   const [stepValues, setStepValues] = useState<Array<number>>([])
   const [step, setStep] = useState(base)
@@ -45,7 +45,7 @@ const SlideSwitch: FC<SlideProps> = ({
         return newStep
       })
     },
-    ...handleInteraction(orbitControls),
+    ...handleInteraction(orbit.current),
   })
   
   const { x } = useSpring({

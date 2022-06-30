@@ -1,6 +1,6 @@
 export type SlideProps = {
   onChange?: (object: Step) => void
-  initialValues?: SlideConfig
+  defaults?: SlideConfig
   [x:string]: any
 }
 

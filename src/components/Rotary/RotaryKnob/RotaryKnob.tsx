@@ -1,48 +1,63 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useContext, useEffect, useRef, useState } from 'react'
-import { degToRad, clamp } from 'three/src/math/MathUtils'
-import { Orbit } from '../../../App'
-import { getInitialRotation, getTaperedValue } from '../utils'
+import { FC, useEffect, useRef, useState } from 'react'
+import { clamp, degToRad } from 'three/src/math/MathUtils'
 import { initializeKnob } from './utils'
 import { KnobProps } from './types'
 import { handleInteraction } from '../../utils'
+import { useOrbit } from '../../Canvas/OrbitContext'
+import { OrbitControls } from 'three-stdlib'
 
 const RotaryKnob: FC<KnobProps> = ({ 
   onChange, 
-  initialValues, 
+  defaults, 
   ...props 
 }) => {
-  const { minVal, maxVal, base, curve, minRad, maxRad } = initializeKnob(initialValues!)
-  const orbitControls = useContext(Orbit)
+  const { minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
+  const orbit = useOrbit()
   const knob = useRef<THREE.Group | null>(null)
-  const [value, setValue] = useState<number>(0)
+  const [value, setValue] = useState(0)
 
   useEffect(() => {
-    knob.current!.rotation.y = getInitialRotation(base, minVal, maxVal, minRad, maxRad, curve)
+    knob.current!.rotation.y = initialRad
   }, [])
 
   const bind = useGesture({
     /* @ts-ignore Property does not exist */
-    onDrag: ({ event, delta: [dx] }) => {
+    onDrag: ({ event, delta: [, dy] }) => {
       event.stopPropagation()
 
-      if (knob.current === null
-      || dx === 0
-      || (dx > 0 && value === maxVal)
-      || (dx < 0 && value === minVal)) return
+      if (orbit.current?.enableRotate) orbit.current.enableRotate = false
       
-      knob.current.rotation.y = clamp(knob.current.rotation.y + degToRad(-dx), minRad, maxRad)
-      const newValue = getTaperedValue(knob.current.rotation.y, minVal, maxVal, minRad, maxRad, curve)
+      if (knob.current === null
+      || dy === 0
+      || (dy < 0 && value === maxVal)
+      || (dy > 0 && value === minVal)) return
+
+      knob.current.rotation.y = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
+      const newValue = getTaperedValue(knob.current.rotation.y)
 
       setValue(newValue)
       if (typeof onChange === 'function') onChange(newValue)
     },
-    ...handleInteraction(orbitControls)
+    /* @ts-ignore Property does not exist */
+    onWheel: ({ event, direction: [_, y]}) => {
+      event.stopPropagation()
+      if (knob.current === null || orbit.current === null || orbit.changing) return
+      
+      orbit.current.enableZoom = false
+      const newRad = knob.current.rotation.y + degToRad(y * 10)
+      
+      knob.current.rotation.y = clamp(newRad, minRad, maxRad)
+    },
+    onWheelEnd: () => { 
+      if (orbit.current) orbit.current.enableZoom = true 
+    },
+    ...handleInteraction(orbit.current),
   })
 
   return (
-    <group 
-      ref={knob} 
+    <group
+      ref={knob}
       {...bind() as any} 
       {...props}
     >

@@ -1,6 +1,6 @@
 import { SlideConfig } from './types'
 
-export const initializeSlideSwitch = (initialValues: SlideConfig) => {
+export const initializeSlideSwitch = (initialValues: SlideConfig | undefined) => {
   const minVal = initialValues?.minVal || 0,
         maxVal = initialValues?.maxVal || 1,
         base   = initialValues?.base   || 0,

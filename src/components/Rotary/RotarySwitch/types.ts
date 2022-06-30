@@ -1,6 +1,6 @@
 export type SwitchProps = {
   onChange?: (object: Step) => void
-  initialValues?: SwitchConfig
+  defaults?: SwitchConfig
   [x:string]: any
 }
 

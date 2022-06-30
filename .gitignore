@@ -25,3 +25,5 @@ yarn-error.log*
 public/*.gltf
 public/*.bin
 public/models
+
+/sketches

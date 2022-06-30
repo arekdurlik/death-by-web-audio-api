@@ -1,13 +1,9 @@
-import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { createContext, MutableRefObject, useRef } from 'react'
 import { PCFShadowMap } from 'three'
 import RotaryKnob from './components/Rotary/RotaryKnob/RotaryKnob'
 import RotarySwitch from './components/Rotary/RotarySwitch/RotarySwitch'
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import SlideSwitch from './components/Switch/SlideSwitch/SlideSwitch'
-
-export const Orbit = createContext<MutableRefObject<any> | null>(null)
+import { OrbitProvider } from './components/Canvas/OrbitContext'
 
 const initialKnobState = {
   minVal: 0,
@@ -24,7 +20,6 @@ const initialSwitchState = {
 }
 
 const App = () => {
-  const orbitControls = useRef<OrbitControlsImpl>(null)
 
   return (
     <>
@@ -54,25 +49,23 @@ const App = () => {
           gl.shadowMap.type = PCFShadowMap
         }}
       >
-        <OrbitControls 
-          makeDefault 
-          ref={orbitControls} 
-        />
         <ambientLight intensity={0.1}/>
         <directionalLight position={[1, 1, 1]} />
 
-        <Orbit.Provider value={orbitControls}>
+        <OrbitProvider>
           <RotaryKnob 
             position={[-2, 0, 0]}
-          />
+            />
           <RotarySwitch 
             initialValues={initialSwitchState}
             position={[2, 0, 0]}
-          />
+            onChange={console.log}
+            />
           <SlideSwitch
             position={[0, 0, 0]}
+            onChange={console.log}
           />
-        </Orbit.Provider>
+        </OrbitProvider>
       </Canvas>
     </>
   )

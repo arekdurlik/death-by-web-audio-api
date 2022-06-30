@@ -1,6 +1,6 @@
 export type KnobProps = {
   onChange?: (value: number) => void
-  initialValues?: KnobConfig
+  defaults?: KnobConfig
   [x:string]: any
 }
 
