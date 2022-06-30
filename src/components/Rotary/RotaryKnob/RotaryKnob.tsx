@@ -12,10 +12,10 @@ const RotaryKnob: FC<KnobProps> = ({
   defaults, 
   ...props 
 }) => {
-  const { minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
+  const { base, minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
   const orbit = useOrbit()
   const knob = useRef<THREE.Group | null>(null)
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState(base)
 
   useEffect(() => {
     knob.current!.rotation.y = initialRad
@@ -23,7 +23,7 @@ const RotaryKnob: FC<KnobProps> = ({
 
   const bind = useGesture({
     /* @ts-ignore Property does not exist */
-    onDrag: ({ event, delta: [, dy] }) => {
+    onDrag: ({ event, delta: [_, dy] }) => {
       event.stopPropagation()
 
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
