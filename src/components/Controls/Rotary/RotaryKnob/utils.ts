@@ -1,5 +1,5 @@
 import { degToRad } from 'three/src/math/MathUtils'
-import { percentToValue, valueToPercent } from '../../../helpers'
+import { percentToValue, valueToPercent } from '../../../../helpers'
 import { taper } from '../utils'
 import { KnobConfig } from './types'
 

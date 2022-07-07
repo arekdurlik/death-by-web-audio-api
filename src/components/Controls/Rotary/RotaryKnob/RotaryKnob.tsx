@@ -3,9 +3,8 @@ import { FC, useEffect, useRef, useState } from 'react'
 import { clamp, degToRad } from 'three/src/math/MathUtils'
 import { initializeKnob } from './utils'
 import { KnobProps } from './types'
-import { handleInteraction } from '../../utils'
-import { useOrbit } from '../../Canvas/OrbitContext'
-import { OrbitControls } from 'three-stdlib'
+import { handleInteraction } from '../../../utils'
+import { useOrbit } from '../../../../contexts/OrbitContext'
 
 const RotaryKnob: FC<KnobProps> = ({ 
   onChange, 

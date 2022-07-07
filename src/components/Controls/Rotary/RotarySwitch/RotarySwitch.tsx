@@ -2,12 +2,12 @@ import { useGesture } from '@use-gesture/react'
 import { FC, useEffect, useRef } from 'react'
 import { useState } from 'react'
 import { clamp } from 'three/src/math/MathUtils'
-import { getSteps } from '../../utils'
+import { getSteps } from '../../../utils'
 import { initializeSwitch } from './utils'
 import { SwitchProps } from './types'
-import { handleInteraction } from '../../utils'
+import { handleInteraction } from '../../../utils'
 import { useSpring, a } from '@react-spring/three'
-import { useOrbit } from '../../Canvas/OrbitContext'
+import { useOrbit } from '../../../../contexts/OrbitContext'
 
 const RotarySwitch: FC<SwitchProps> = ({ 
   onChange, 

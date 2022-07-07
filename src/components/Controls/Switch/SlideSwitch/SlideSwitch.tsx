@@ -1,12 +1,12 @@
 import { useSpring, a } from '@react-spring/three'
 import { FC, useEffect, useRef, useState } from 'react'
-import { getSteps } from '../../utils'
+import { getSteps } from '../../../utils'
 import { SlideProps } from './types'
 import { initializeSlideSwitch } from './utils'
-import { handleInteraction } from '../../utils'
+import { handleInteraction } from '../../../utils'
 import { useGesture } from '@use-gesture/react'
 import { clamp } from 'three/src/math/MathUtils'
-import { useOrbit } from '../../Canvas/OrbitContext'
+import { useOrbit } from '../../../../contexts/OrbitContext'
 
 const SlideSwitch: FC<SlideProps> = ({
   onChange, 

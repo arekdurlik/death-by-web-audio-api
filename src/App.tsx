@@ -1,9 +1,9 @@
 import { Canvas } from '@react-three/fiber'
 import { PCFShadowMap } from 'three'
-import RotaryKnob from './components/Rotary/RotaryKnob/RotaryKnob'
-import RotarySwitch from './components/Rotary/RotarySwitch/RotarySwitch'
-import SlideSwitch from './components/Switch/SlideSwitch/SlideSwitch'
-import { OrbitProvider } from './components/Canvas/OrbitContext'
+import RotaryKnob from './components/Controls/Rotary/RotaryKnob/RotaryKnob'
+import RotarySwitch from './components/Controls/Rotary/RotarySwitch/RotarySwitch'
+import SlideSwitch from './components/Controls/Switch/SlideSwitch/SlideSwitch'
+import { OrbitProvider } from './contexts/OrbitContext'
 
 const initialKnobState = {
   minVal: 0,
