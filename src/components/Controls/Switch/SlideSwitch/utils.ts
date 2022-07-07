@@ -3,13 +3,13 @@ import { SlideSwitchConfig } from './types'
 import { getSteps } from '../../../utils'
 
 export const initializeSlideSwitch = (
-  initialValues: SlideSwitchConfig | undefined
+  defaults: SlideSwitchConfig | undefined
 ) => {
-  const minVal = initialValues?.minVal || 0,
-        maxVal = initialValues?.maxVal || 1,
-        base   = initialValues?.base   || 2,
-        steps  = initialValues?.steps  || 3,
-        torque = initialValues?.torque || 1,
+  const minVal = defaults?.minVal || 0,
+        maxVal = defaults?.maxVal || 1,
+        base   = defaults?.base   || 1,
+        steps  = defaults?.steps  || 3,
+        torque = defaults?.torque || 1,
         stepValues = getSteps(minVal, maxVal, steps)
 
   if (steps === 1) 

@@ -11,7 +11,7 @@ const RotaryKnob: FC<KnobProps> = ({
   defaults, 
   ...props 
 }) => {
-  const { base, minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
+  const { base, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
   const orbit = useOrbit()
   const knob = useRef<THREE.Group | null>(null)
   const [value, setValue] = useState(base)
@@ -28,9 +28,7 @@ const RotaryKnob: FC<KnobProps> = ({
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
       
       if (knob.current === null
-      || dy === 0
-      || (dy < 0 && value === maxVal)
-      || (dy > 0 && value === minVal)) return
+      || dy === 0) return
 
       knob.current.rotation.y = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
       const newValue = getTaperedValue(knob.current.rotation.y)
@@ -39,13 +37,17 @@ const RotaryKnob: FC<KnobProps> = ({
       if (typeof onChange === 'function') onChange(newValue)
     },
     /* @ts-ignore Property does not exist */
-    onWheel: ({ event, direction: [_, y]}) => {
+    onWheel: ({ event, movement: [_, y]}) => {
       event.stopPropagation()
-      if (knob.current === null || orbit.current === null || orbit.changing) return
       
+      if (knob.current === null  
+      || orbit.current === null
+      || orbit.changing) return
+        
       orbit.current.enableZoom = false
-      const newRad = knob.current.rotation.y + degToRad(y * 10)
-      
+        
+      const newRad = knob.current.rotation.y - degToRad(y/100)
+
       knob.current.rotation.y = clamp(newRad, minRad, maxRad)
     },
     onWheelEnd: () => { 

@@ -1,5 +1,5 @@
 import { useSpring, a } from '@react-spring/three'
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import { getSteps } from '../../../utils'
 import { SlideSwitchProps } from './types'
 import { initializeSlideSwitch, invertQuaternion } from './utils'
@@ -22,10 +22,22 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
   const group = useRef<THREE.Group | null>(null)
   const planeIntersect = useRef(new Vector3())
   const delayScroll = useRef(false)
-  const dragPos = useRef(0)
+  const cap = useRef<THREE.Mesh | null>(null)
+  const capOffset= useRef(0)
 
 
   const dragBind = useGesture({
+    onDragStart: ({ event }) => {
+      event.stopPropagation()
+
+      /* @ts-ignore Property does not exist */
+      event.ray.intersectPlane(plane, planeIntersect.current)
+        
+      const invertedQuaternion = invertQuaternion(group.current!.quaternion)
+      planeIntersect.current.applyQuaternion(invertedQuaternion)
+
+      capOffset.current = cap.current!.position.x - planeIntersect.current.x
+    },
     onDrag: ({ event, active }) => {
       event.stopPropagation()
 
@@ -36,17 +48,13 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
         const invertedQuaternion = invertQuaternion(group.current.quaternion)
         planeIntersect.current.applyQuaternion(invertedQuaternion)
         
-        const newDragPos = planeIntersect.current.x
+        const dragPos = clamp(planeIntersect.current.x + capOffset.current, -0.45, 0.45)
 
-        const next = (newDragPos > (stepPositions[step + 1])
-        && (newDragPos - dragPos.current > 0))
-        const prev = (newDragPos < (stepPositions[step - 1])
-        && (newDragPos - dragPos.current < 0))
+        const next = dragPos >= stepPositions[step + 1]
+        const prev = dragPos <= stepPositions[step - 1]
 
-        dragPos.current! = newDragPos
-
-        const direction = next ? 1 : prev ? -1 : null
-        if (direction) handleStepChange(direction)
+        if (next) handleStepChange(1)
+        else if (prev) handleStepChange(-1)
       }
     },
     ...handleInteraction(orbit.current)
@@ -100,6 +108,7 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
         <meshBasicMaterial color="#333"/>
       </mesh>
       <a.mesh 
+        ref={cap}
         position-y={0.1}
         position-x={x}
         {...dragBind() as any}

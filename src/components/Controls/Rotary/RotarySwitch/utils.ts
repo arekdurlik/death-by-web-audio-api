@@ -8,8 +8,9 @@ export const initializeSwitch = (defaults: SwitchConfig | undefined) => {
         steps  = defaults?.steps  || 5,
         torque = defaults?.torque || 20,
         minDeg = defaults?.minDeg || -135,
-        maxDeg = defaults?.maxDeg || 135,
-        minRad = degToRad(minDeg),
+        maxDeg = defaults?.maxDeg || 135
+      
+  const minRad = degToRad(minDeg),
         maxRad = degToRad(maxDeg)
   
   return { minVal, maxVal, base, steps, torque, minDeg, maxDeg, minRad, maxRad }

@@ -24,6 +24,7 @@ export const OrbitProvider: FC<Props> = ({ children }) => {
 
     return () => {
       ref?.removeEventListener('start', handleOrbitStart)
+      window.removeEventListener('pointerup', handleOrbitEnd)
     }
   }, [controls])
 

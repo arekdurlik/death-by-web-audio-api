@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { PCFShadowMap, Plane, Vector3 } from 'three'
 import RotaryKnob from './components/Controls/Rotary/RotaryKnob/RotaryKnob'
 import RotarySwitch from './components/Controls/Rotary/RotarySwitch/RotarySwitch'
+import Slider from './components/Controls/Slider/Slider'
 import SlideSwitch from './components/Controls/Switch/SlideSwitch/SlideSwitch'
 import { OrbitProvider } from './contexts/OrbitContext'
 
@@ -56,6 +57,7 @@ const App = () => {
         <OrbitProvider>
           <RotaryKnob 
             position={[-2, 0, 0]}
+            onChange={console.log}
             />
           <RotarySwitch 
             initialValues={initialSwitchState}
@@ -63,8 +65,12 @@ const App = () => {
             onChange={console.log}
             />
           <SlideSwitch
-            position={[0, 0, 0]}
+            position={[0, 0, -1]}
             onChange={console.log}
+            plane={plane}
+            />
+          <Slider
+            position={[0, 0, 1]}
             plane={plane}
           />
         </OrbitProvider>
