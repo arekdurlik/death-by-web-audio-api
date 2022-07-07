@@ -1,10 +1,11 @@
-export type SlideProps = {
+export type SlideSwitchProps = {
   onChange?: (object: Step) => void
-  defaults?: SlideConfig
+  defaults?: SlideSwitchConfig
+  plane?: THREE.Plane 
   [x:string]: any
 }
 
-export type SlideConfig = {
+export type SlideSwitchConfig = {
   minVal?: number
   maxVal?: number
   steps?: number

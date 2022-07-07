@@ -2,11 +2,11 @@ import { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 export const handleInteraction = (controls: OrbitControlsImpl | null): any => {
   return {
-    onDragStart: () => {
+    onPointerDown: () => {
       if (controls) controls.enableRotate = false
       document.body.style.cursor =  'grabbing'
     },
-    onDragEnd: () => { 
+    onPointerUp: () => { 
       if (controls) controls.enableRotate = true
       document.body.style.cursor =  'auto'
     },
