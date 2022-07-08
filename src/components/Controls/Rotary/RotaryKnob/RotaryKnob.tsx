@@ -11,7 +11,7 @@ const RotaryKnob: FC<KnobProps> = ({
   defaults, 
   ...props 
 }) => {
-  const { base, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
+  const { base, minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
   const orbit = useOrbit()
   const knob = useRef<THREE.Group | null>(null)
   const [value, setValue] = useState(base)
@@ -21,34 +21,35 @@ const RotaryKnob: FC<KnobProps> = ({
   }, [])
 
   const bind = useGesture({
-    /* @ts-ignore Property does not exist */
     onDrag: ({ event, delta: [_, dy] }) => {
       event.stopPropagation()
 
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
       
       if (knob.current === null
+      || (dy > 0 && value === minVal)
+      || (dy < 0 && value === maxVal)
       || dy === 0) return
 
       knob.current.rotation.y = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
-      const newValue = getTaperedValue(knob.current.rotation.y)
-
-      setValue(newValue)
-      if (typeof onChange === 'function') onChange(newValue)
+      
+      handleValueChange()
     },
-    /* @ts-ignore Property does not exist */
     onWheel: ({ event, movement: [_, y]}) => {
       event.stopPropagation()
       
+      if (orbit.current) orbit.current.enableZoom = false
+
       if (knob.current === null  
-      || orbit.current === null
+      || (y < 0 && value === minVal)
+      || (y > 0 && value === maxVal)
       || orbit.changing) return
-        
-      orbit.current.enableZoom = false
         
       const newRad = knob.current.rotation.y - degToRad(y/100)
 
       knob.current.rotation.y = clamp(newRad, minRad, maxRad)
+
+      handleValueChange()
     },
     onWheelEnd: () => { 
       if (orbit.current) orbit.current.enableZoom = true 
@@ -56,6 +57,11 @@ const RotaryKnob: FC<KnobProps> = ({
     ...handleInteraction(orbit.current),
   })
 
+  const handleValueChange = () => {
+    const newValue = getTaperedValue(knob.current!.rotation.y)
+    setValue(newValue)
+    if (typeof onChange === 'function') onChange(newValue)
+  }
   return (
     <group
       ref={knob}

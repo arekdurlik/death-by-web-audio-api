@@ -20,14 +20,12 @@ export const initializeSlider = (defaults: SliderConfig | undefined) => {
     return taper(value, maxVal, minVal, curve)
   }
 
-  return { minVal, maxVal, base, curve, getInitialPos, getTaperedValue }
-}
-
-export const invertQuaternion = (quaternion: Quaternion) => {
-  return new Quaternion(
-    -quaternion.x,
-    -quaternion.y,
-    -quaternion.z,
-    quaternion.w
-  )
+  return { 
+    minVal, 
+    maxVal, 
+    base, 
+    curve, 
+    getInitialPos, 
+    getTaperedValue 
+  }
 }

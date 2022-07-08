@@ -1,4 +1,4 @@
-import { lerp } from 'three/src/math/MathUtils'
+import { Quaternion } from 'three'
 
 export const valueToPercent = (val: number, min: number, max: number) => {
   return ((val - min) * 100) / (max - min)
@@ -18,3 +18,11 @@ export const normalize = (val: number, min: number, max: number) => {
 	return (val - min) / (max - min)
 }
 
+export const invertQuaternion = (quaternion: Quaternion) => {
+  return new Quaternion(
+    -quaternion.x,
+    -quaternion.y,
+    -quaternion.z,
+    quaternion.w
+  )
+}

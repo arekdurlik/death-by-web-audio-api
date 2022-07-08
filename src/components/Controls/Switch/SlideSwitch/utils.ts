@@ -19,12 +19,3 @@ export const initializeSlideSwitch = (
 
   return { minVal, maxVal, base, steps, torque, stepValues }
 }
-
-export const invertQuaternion = (quaternion: Quaternion) => {
-  return new Quaternion(
-    -quaternion.x,
-    -quaternion.y,
-    -quaternion.z,
-    quaternion.w
-  )
-}

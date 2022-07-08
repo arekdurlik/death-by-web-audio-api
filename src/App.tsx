@@ -6,14 +6,14 @@ import Slider from './components/Controls/Slider/Slider'
 import SlideSwitch from './components/Controls/Switch/SlideSwitch/SlideSwitch'
 import { OrbitProvider } from './contexts/OrbitContext'
 
-const initialKnobState = {
+const knobDefaults = {
   minVal: 0,
   maxVal: 4,
   curve: 1,
   base: 2
 }
 
-const initialSwitchState = {
+const switchDefaults = {
   minVal: 0,
   maxVal: 10,
   steps: 8, 
@@ -29,14 +29,14 @@ const App = () => {
         <div>
           <span>initial rotary knob state:</span>
           <pre>
-            {JSON.stringify(initialKnobState, null, 2)}
+            {JSON.stringify(knobDefaults, null, 2)}
           </pre>
         </div>
 
         <div>
           <span>initial rotary switch state:</span>
           <pre>
-            {JSON.stringify(initialSwitchState, null, 2)}
+            {JSON.stringify(switchDefaults, null, 2)}
           </pre>
         </div>
       </div>
@@ -56,13 +56,14 @@ const App = () => {
 
         <OrbitProvider>
           <RotaryKnob 
+            defaults={knobDefaults}
             position={[-2, 0, 0]}
             onChange={console.log}
             />
           <RotarySwitch 
-            initialValues={initialSwitchState}
             position={[2, 0, 0]}
             onChange={console.log}
+            defaults={switchDefaults}
             />
           <SlideSwitch
             position={[0, 0, -1]}
@@ -72,6 +73,7 @@ const App = () => {
           <Slider
             position={[0, 0, 1]}
             plane={plane}
+            onChange={console.log}
           />
         </OrbitProvider>
       </Canvas>

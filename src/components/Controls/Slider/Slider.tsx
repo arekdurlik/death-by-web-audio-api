@@ -1,11 +1,12 @@
 import { FC, useEffect, useRef, useState } from 'react'
 import { SliderProps } from './types'
-import { initializeSlider, invertQuaternion } from './utils'
+import { initializeSlider } from './utils'
 import { handleInteraction } from '../../utils'
 import { useGesture } from '@use-gesture/react'
 import { useOrbit } from '../../../contexts/OrbitContext'
 import { Vector3 } from 'three'
 import { clamp, degToRad } from 'three/src/math/MathUtils'
+import { invertQuaternion } from '../../../helpers'
 
 const Slider: FC<SliderProps> = ({
   onChange, 

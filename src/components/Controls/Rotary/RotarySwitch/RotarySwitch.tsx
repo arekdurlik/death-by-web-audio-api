@@ -1,9 +1,7 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useEffect, useRef } from 'react'
-import { useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import { clamp } from 'three/src/math/MathUtils'
-import { getSteps } from '../../../utils'
-import { initializeSwitch } from './utils'
+import { initializeRotarySwitch } from './utils'
 import { SwitchProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useSpring, a } from '@react-spring/three'
@@ -14,40 +12,59 @@ const RotarySwitch: FC<SwitchProps> = ({
   defaults, 
   ...props 
 }) => {
-  const { minVal, maxVal, base, steps, torque, minRad, maxRad } = initializeSwitch(defaults)
+  const { base, steps, torque, stepValues, stepRotations } = initializeRotarySwitch(defaults)
   const orbit = useOrbit()
-  const [stepRotations, setStepRotations] = useState<Array<number>>([])
-  const [stepValues, setStepValues] = useState<Array<number>>([])
-  const [step, setStep] = useState(base)
-  const offset = useRef<number>(0)
-
-  useEffect(() => {
-    setStepRotations(getSteps(minRad, maxRad, steps).reverse())
-    setStepValues(getSteps(minVal, maxVal, steps).reverse())
-  }, [])
+  const [step, setStep] = useState(base - 1)
+  const offset = useRef(0)
+  const delayScroll = useRef(false)
 
   const bind = useGesture({
-    /* @ts-ignore Property does not exist */
-    onDrag: ({ down, event, direction: [dx] }) => {
+    onDrag: ({ event, delta: [_, dy] }) => {
       event.stopPropagation()
 
-      offset.current = down ? offset.current + 1 : 0
-      
-      if (offset.current < torque
-      || (dx > 0 && step === steps - 1)
-      || (dx < 0 && step === 0)) return
+      if (dy === 0
+      || (dy > 0 && step === 0)
+      || (dy < 0 && step === steps - 1)) return
 
-      offset.current = 0
-      
-      setStep((prevStep: number) => {
-        const newStep = clamp(prevStep + dx, 0, steps - 1)
-        
-        if (typeof onChange === 'function') onChange({ step: newStep, value: stepValues[newStep]})
-        return newStep
-      })
+      offset.current += dy
+
+      if (Math.abs(offset.current) > torque) {
+        handleStepChange(dy)
+        offset.current = 0
+      }
+    },
+    onWheelStart: () => {
+      if (orbit.current) orbit.current.enableZoom = false
+    },
+    onWheel: ({ direction: [_, y]}) => {
+
+      if (delayScroll.current === true
+      || (y > 0 && step === 0)
+      || (y < 0 && step === steps - 1)) return
+
+      delayScroll.current = true
+      handleStepChange(y)
+
+      setTimeout(() => delayScroll.current = false, 200)
+    },
+    onWheelEnd: () => {
+      if (orbit.current) orbit.current.enableZoom = true
     },
     ...handleInteraction(orbit.current)
   })
+
+  const handleStepChange = (direction: number) => {
+    setStep((prevStep: number) => {
+      const newStep = clamp(prevStep - direction, 0, steps - 1)
+      
+      if (typeof onChange === 'function') 
+        onChange({ 
+          step: newStep + 1, 
+          value: stepValues[newStep] 
+        })
+      return newStep
+    })
+  }
 
   const { rotation } = useSpring({
     rotation: stepRotations[step],

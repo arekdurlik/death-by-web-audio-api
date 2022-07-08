@@ -2,12 +2,13 @@ import { useSpring, a } from '@react-spring/three'
 import { FC, useRef, useState } from 'react'
 import { getSteps } from '../../../utils'
 import { SlideSwitchProps } from './types'
-import { initializeSlideSwitch, invertQuaternion } from './utils'
+import { initializeSlideSwitch } from './utils'
 import { handleInteraction } from '../../../utils'
 import { useGesture } from '@use-gesture/react'
 import { clamp } from 'three/src/math/MathUtils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
 import { Vector3 } from 'three'
+import { invertQuaternion } from '../../../../helpers'
 
 const SlideSwitch: FC<SlideSwitchProps> = ({
   onChange, 
@@ -18,7 +19,7 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
   const { base, steps, stepValues } = initializeSlideSwitch(defaults)
   const stepPositions = getSteps(-0.45, 0.45, steps)
   const orbit = useOrbit()
-  const [step, setStep] = useState(base)
+  const [step, setStep] = useState(base - 1)
   const group = useRef<THREE.Group | null>(null)
   const planeIntersect = useRef(new Vector3())
   const delayScroll = useRef(false)
@@ -52,9 +53,9 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
 
         const next = dragPos >= stepPositions[step + 1]
         const prev = dragPos <= stepPositions[step - 1]
+        const dir = next ? 1 : prev ? -1 : null
 
-        if (next) handleStepChange(1)
-        else if (prev) handleStepChange(-1)
+        if (dir) handleStepChange(dir)
       }
     },
     ...handleInteraction(orbit.current)
@@ -89,7 +90,7 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
         if (newStep === prevStep) return prevStep
 
         if (typeof onChange === 'function') onChange({ 
-          step: newStep, 
+          step: newStep + 1, 
           value: stepValues[newStep]
         })
 
