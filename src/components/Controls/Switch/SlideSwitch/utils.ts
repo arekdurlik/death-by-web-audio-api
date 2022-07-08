@@ -1,4 +1,3 @@
-import { Quaternion } from 'three'
 import { SlideSwitchConfig } from './types'
 import { getSteps } from '../../../utils'
 

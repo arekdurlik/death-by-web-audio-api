@@ -1,5 +1,5 @@
 import { degToRad } from 'three/src/math/MathUtils'
-import { percentToValue, valueToPercent } from '../../../../helpers'
+import { lerp, invlerp } from '../../../../helpers'
 import { taper } from '../../../../helpers'
 import { KnobConfig } from './types'
 
@@ -12,17 +12,18 @@ export const initializeKnob = (defaults: KnobConfig | undefined) => {
         minDeg = defaults?.minDeg || -135,
         maxDeg = defaults?.maxDeg || 135
 
-  const minRad              = degToRad(minDeg),
-        maxRad              = degToRad(maxDeg),
-        taperedVal          = taper(base, minVal, maxVal, curve),
-        percentage          = valueToPercent(taperedVal, minVal, maxVal),
-        initialDeg          = percentToValue(percentage, minDeg, maxDeg),
-        initialRad          = degToRad(initialDeg)
+  const minRad     = degToRad(minDeg),
+        maxRad     = degToRad(maxDeg),
+
+        taperedVal = taper(base, minVal, maxVal, curve),
+        fraction   = invlerp(minVal, maxVal, taperedVal),
+        initialDeg = -lerp(minDeg, maxDeg, fraction),
+        initialRad = degToRad(initialDeg)
 
   const getTaperedValue = (rot: number) => {
-    const positionPercentage = valueToPercent(rot, minRad, maxRad)
-    const value = percentToValue(positionPercentage, minVal, maxVal)
-    return maxVal - taper(value, minVal, maxVal, curve)
+    const fraction = invlerp(minRad, maxRad, rot)
+    const value = lerp(minVal, maxVal, fraction)
+    return taper(maxVal - value, minVal, maxVal, curve)
   }
 
   return { 
@@ -35,7 +36,6 @@ export const initializeKnob = (defaults: KnobConfig | undefined) => {
     maxDeg, 
     minRad, 
     maxRad, 
-    initialDeg, 
     initialRad, 
     getTaperedValue 
   }

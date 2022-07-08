@@ -1,21 +1,27 @@
 import { Quaternion } from 'three'
 
-export const valueToPercent = (val: number, min: number, max: number) => {
-  return ((val - min) * 100) / (max - min)
-}
-
-export const percentToValue = (
-  percent: number, min: number, max: number
-) => {
-  return (((max - min) / 100) * percent) + min
-}
-
-export const taper = (val: number, minVal: number, maxVal: number, curve: number) => { 
-  return (maxVal - minVal) * (normalize(val, minVal, maxVal) ** curve) + minVal
+export const taper = (val: number, min: number, max: number, curve: number) => { 
+  return (max - min) * (normalize(val, min, max) ** curve) + min
 }
 
 export const normalize = (val: number, min: number, max: number) => {
 	return (val - min) / (max - min)
+}
+
+export const lerp = (x: number, y: number, a: number) => {
+  return x * (1 - a) + y * a
+}
+
+export const invlerp = (x: number, y: number, a: number) => {
+  return clamp((a - x) / (y - x))
+}
+
+export const clamp = (a: number, min = 0, max = 1) => {
+  return Math.min(max, Math.max(min, a))
+}
+
+export const range = (x1: number, y1: number, x2: number, y2: number, a: number) => {
+  return lerp(x2, y2, invlerp(x1, y1, a))
 }
 
 export const invertQuaternion = (quaternion: Quaternion) => {

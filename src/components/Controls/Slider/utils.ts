@@ -1,5 +1,4 @@
-import { Quaternion } from 'three'
-import { percentToValue, taper, valueToPercent } from '../../../helpers'
+import { lerp, invlerp, taper } from '../../../helpers'
 import { SliderConfig } from './types'
 
 export const initializeSlider = (defaults: SliderConfig | undefined) => {
@@ -10,13 +9,13 @@ export const initializeSlider = (defaults: SliderConfig | undefined) => {
 
   const getInitialPos = (minPos: number, maxPos: number) => {
     const taperedVal = taper(base, minVal, maxVal, curve)
-    const percentage = valueToPercent(taperedVal, minVal, maxVal)
-    return percentToValue(percentage, minPos, maxPos)
+    const fraction = invlerp(minVal, maxVal, taperedVal)
+    return lerp(minPos, maxPos, fraction)
   }
 
   const getTaperedValue = (dragPos: number, lowerBound: number, upperBound: number) => {
-    const positionPercentage = valueToPercent(dragPos, lowerBound, upperBound)
-    const value = percentToValue(positionPercentage, minVal, maxVal)
+    const fraction = invlerp(lowerBound, upperBound, dragPos)
+    const value = lerp(minVal, maxVal, fraction)
     return taper(value, maxVal, minVal, curve)
   }
 
