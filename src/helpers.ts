@@ -5,7 +5,7 @@ export const taper = (val: number, min: number, max: number, curve: number) => {
 }
 
 export const normalize = (val: number, min: number, max: number) => {
-	return (val - min) / (max - min)
+  return (val - min) / (max - min)
 }
 
 export const lerp = (x: number, y: number, a: number) => {

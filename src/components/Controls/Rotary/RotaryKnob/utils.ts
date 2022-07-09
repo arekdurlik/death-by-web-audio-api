@@ -1,14 +1,13 @@
 import { degToRad } from 'three/src/math/MathUtils'
-import { lerp, invlerp } from '../../../../helpers'
-import { taper } from '../../../../helpers'
+import { lerp, invlerp, taper } from '../../../../helpers'
 import { KnobConfig } from './types'
 
 export const initializeKnob = (defaults: KnobConfig | undefined) => {
   const minVal = defaults?.minVal || 0,
-        maxVal = defaults?.maxVal || 5,
-        base   = defaults?.base   || 2.5,
+        maxVal = defaults?.maxVal || 1,
+        base   = defaults?.base   || 0,
         ramp   = defaults?.ramp   || 0,
-        curve  = defaults?.curve  || 2,
+        curve  = defaults?.curve  || 1,
         minDeg = defaults?.minDeg || -135,
         maxDeg = defaults?.maxDeg || 135
 

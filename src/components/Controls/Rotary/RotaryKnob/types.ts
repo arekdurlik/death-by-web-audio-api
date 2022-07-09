@@ -1,5 +1,6 @@
 export type KnobProps = {
-  onChange?: (value: number) => void
+  id?: string | number,
+  onChange?: (value: Value) => void
   defaults?: KnobConfig
   [x:string]: any
 }
@@ -12,4 +13,11 @@ export type KnobConfig = {
   curve?: number
   minDeg?: number
   maxDeg?: number
+  value?: number
 } 
+
+export type Value = {
+  id?: string | number
+  value: number
+  step?: number
+}

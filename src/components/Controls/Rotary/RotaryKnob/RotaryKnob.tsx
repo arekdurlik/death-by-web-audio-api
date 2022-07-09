@@ -5,25 +5,32 @@ import { initializeKnob } from './utils'
 import { KnobProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
+import { range } from '../../../../helpers'
 
-const RotaryKnob: FC<KnobProps> = ({ 
-  onChange, 
-  defaults, 
+const RotaryKnob: FC<KnobProps> = ({
+  id, 
+  onChange,
+  value, 
+  defaults,
   ...props 
 }) => {
-  const { base, minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
+  const {minVal, maxVal, minRad, maxRad, initialRad, getTaperedValue } = initializeKnob(defaults)
   const orbit = useOrbit()
   const knob = useRef<THREE.Group | null>(null)
-  const [value, setValue] = useState(base)
 
   useEffect(() => {
     knob.current!.rotation.y = initialRad
   }, [])
 
+  useEffect(() => {
+    if (value === undefined) return
+    knob.current!.rotation.y = -range(minVal, maxVal, minRad, maxRad, value)
+  }, [value])
+
   const bind = useGesture({
     onDrag: ({ event, delta: [_, dy] }) => {
       event.stopPropagation()
-
+      
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
       
       if (knob.current === null
@@ -31,9 +38,9 @@ const RotaryKnob: FC<KnobProps> = ({
       || (dy < 0 && value === maxVal)
       || dy === 0) return
 
-      knob.current.rotation.y = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
+      const newVal = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
       
-      handleValueChange()
+      handleValueChange(newVal)
     },
     onWheel: ({ event, movement: [_, y]}) => {
       event.stopPropagation()
@@ -47,9 +54,9 @@ const RotaryKnob: FC<KnobProps> = ({
         
       const newRad = knob.current.rotation.y - degToRad(y/100)
 
-      knob.current.rotation.y = clamp(newRad, minRad, maxRad)
+      const newVal = clamp(newRad, minRad, maxRad)
 
-      handleValueChange()
+      handleValueChange(newVal)
     },
     onWheelEnd: () => { 
       if (orbit.current) orbit.current.enableZoom = true 
@@ -57,10 +64,11 @@ const RotaryKnob: FC<KnobProps> = ({
     ...handleInteraction(orbit.current),
   })
 
-  const handleValueChange = () => {
-    const newValue = getTaperedValue(knob.current!.rotation.y)
-    setValue(newValue)
-    if (typeof onChange === 'function') onChange(newValue)
+  const handleValueChange = (newVal: number) => {
+    if (typeof onChange === 'function') onChange({
+      id,
+      value: getTaperedValue(newVal)
+    })
   }
   return (
     <group
