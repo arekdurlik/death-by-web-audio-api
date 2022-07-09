@@ -4,7 +4,7 @@ import RotaryKnob from '../../Controls/Rotary/RotaryKnob/RotaryKnob'
 import SlideSwitch from '../../Controls/Switch/SlideSwitch/SlideSwitch'
 import { Value } from '../../Controls/Rotary/RotaryKnob/types'
 import { Action, State } from '../../Controls/types'
-import { initialDelayState} from './init'
+import { initialDelayState } from './init'
 
 const availableControls = { RotaryKnob, SlideSwitch }
 
@@ -27,10 +27,7 @@ const Delay = () => {
   const handleChange = (payload: Value) => {
     dispatch({ 
       type: 'SET_VALUE', 
-      payload: {
-        id: payload.id,
-        value: payload.value
-      }
+      payload
     })
   }
 
@@ -55,6 +52,10 @@ const Delay = () => {
   return (
     <>
       {Controls}
+      <RotaryKnob
+      onChange={console.log}
+      position={[-5,0,0]}
+      />
     </>
   )
 }
