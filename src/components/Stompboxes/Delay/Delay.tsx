@@ -53,8 +53,8 @@ const Delay = () => {
     <>
       {Controls}
       <RotaryKnob
-      onChange={console.log}
-      position={[-5,0,0]}
+        onChange={console.log}
+        position={[-5,0,0]}
       />
     </>
   )

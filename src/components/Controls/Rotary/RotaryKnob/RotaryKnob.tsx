@@ -1,11 +1,11 @@
 import { useGesture } from '@use-gesture/react'
 import { FC, useEffect, useRef } from 'react'
-import { clamp, degToRad } from 'three/src/math/MathUtils'
+import { degToRad } from 'three/src/math/MathUtils'
 import { initializeKnob } from './utils'
 import { KnobProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
-import { range } from '../../../../helpers'
+import { clamp, range } from '../../../../helpers'
 
 const RotaryKnob: FC<KnobProps> = ({
   id, 
@@ -31,10 +31,11 @@ const RotaryKnob: FC<KnobProps> = ({
   }, [valueProp])
 
   const bind = useGesture({
+    onDragStart: () => {
+      if (orbit.current?.enableRotate) orbit.current.enableRotate = false
+    },
     onDrag: ({ event, delta: [_, dy] }) => {
       event.stopPropagation()
-      
-      if (orbit.current?.enableRotate) orbit.current.enableRotate = false
       
       if (knob.current === null
       || (dy > 0 && internalVal.current === minVal)
@@ -44,11 +45,15 @@ const RotaryKnob: FC<KnobProps> = ({
       const newRad = clamp(knob.current.rotation.y + degToRad(dy), minRad, maxRad)
       handleRotation(newRad)
     },
+    onDragEnd: () => {
+      if (orbit.current) orbit.current.enableZoom = true
+    },
+    onWheelStart: () => {
+      if (orbit.current) orbit.current.enableZoom = false
+    },
     onWheel: ({ event, movement: [_, y]}) => {
       event.stopPropagation()
       
-      if (orbit.current) orbit.current.enableZoom = false
-
       if (knob.current === null  
       || (y < 0 && internalVal.current === minVal)
       || (y > 0 && internalVal.current === maxVal)

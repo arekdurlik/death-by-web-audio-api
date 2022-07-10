@@ -1,4 +1,6 @@
-export const initialDelayState = {
+import { InitialState } from '../../Controls/types'
+
+export const initialDelayState: InitialState = {
   gain: {
     type: 'RotaryKnob',
     defaults: { base: 1, minVal: 0, maxVal: 5 },

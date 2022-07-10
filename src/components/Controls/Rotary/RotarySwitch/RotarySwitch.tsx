@@ -1,11 +1,11 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useRef, useState } from 'react'
-import { clamp } from 'three/src/math/MathUtils'
+import { FC, useRef } from 'react'
 import { initializeRotarySwitch } from './utils'
 import { SwitchProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useSpring, a } from '@react-spring/three'
 import { useOrbit } from '../../../../contexts/OrbitContext'
+import { clamp } from '../../../../helpers'
 
 const RotarySwitch: FC<SwitchProps> = ({ 
   onChange, 
@@ -14,17 +14,17 @@ const RotarySwitch: FC<SwitchProps> = ({
 }) => {
   const { base, steps, torque, stepValues, stepRotations } = initializeRotarySwitch(defaults)
   const orbit = useOrbit()
-  const [step, setStep] = useState(base - 1)
+  const step = useRef(base - 1)
   const offset = useRef(0)
   const delayScroll = useRef(false)
 
   const bind = useGesture({
-    onDrag: ({ event, delta: [_, dy] }) => {
+    onDrag: ({ event, direction: [_, dy] }) => {
       event.stopPropagation()
 
       if (dy === 0
-      || (dy > 0 && step === 0)
-      || (dy < 0 && step === steps - 1)) return
+      || (dy > 0 && step.current === 0)
+      || (dy < 0 && step.current === steps - 1)) return
 
       offset.current += dy
 
@@ -36,15 +36,16 @@ const RotarySwitch: FC<SwitchProps> = ({
     onWheelStart: () => {
       if (orbit.current) orbit.current.enableZoom = false
     },
-    onWheel: ({ direction: [_, y]}) => {
-
+    onWheel: ({event, direction: [_, y]}) => {
+      event.stopPropagation()
+      
       if (delayScroll.current === true
-      || (y > 0 && step === 0)
-      || (y < 0 && step === steps - 1)) return
-
+      || (y > 0 && step.current === 0)
+      || (y < 0 && step.current === steps - 1)) return
+      
       delayScroll.current = true
       handleStepChange(y)
-
+      
       setTimeout(() => delayScroll.current = false, 200)
     },
     onWheelEnd: () => {
@@ -52,24 +53,21 @@ const RotarySwitch: FC<SwitchProps> = ({
     },
     ...handleInteraction(orbit.current)
   })
-
+  
   const handleStepChange = (direction: number) => {
-    setStep((prevStep: number) => {
-      const newStep = clamp(prevStep - direction, 0, steps - 1)
-      
-      if (typeof onChange === 'function') 
-        onChange({ 
-          step: newStep + 1, 
-          value: stepValues[newStep] 
-        })
-      return newStep
+    step.current = clamp(step.current - direction, 0, steps - 1)
+    api.set({ rotation: stepRotations[step.current] })
+
+    if (typeof onChange === 'function') onChange({ 
+      step: step.current + 1, 
+      value: stepValues[step.current] 
     })
   }
 
-  const { rotation } = useSpring({
-    rotation: stepRotations[step],
-    config: { mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0 }
-  })
+  const [{ rotation }, api ] = useSpring(() => ({
+      rotation: stepRotations[step.current], 
+      config: { mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0}
+  }))
 
   return (
     <a.group 

@@ -4,7 +4,7 @@ import { initializeSlider } from './utils'
 import { handleInteraction } from '../../utils'
 import { useGesture } from '@use-gesture/react'
 import { useOrbit } from '../../../contexts/OrbitContext'
-import { Vector3 } from 'three'
+import { Plane, Vector3 } from 'three'
 import { clamp, degToRad } from 'three/src/math/MathUtils'
 import { invertQuaternion } from '../../../helpers'
 
@@ -14,9 +14,9 @@ const Slider: FC<SliderProps> = ({
   plane, 
   ...props 
 }) => {
-  const { getInitialPos, getTaperedValue } = initializeSlider(defaults)
+  const { minVal, maxVal, getInitialPos, getTaperedValue } = initializeSlider(defaults)
   const capOffset = useRef(0)
-  const [value, setValue] = useState(0)
+  const value = useRef(0)
   const planeIntersect = useRef(new Vector3())
   const group = useRef<THREE.Group | null>(null)
   const cap = useRef<THREE.Mesh | null>(null)
@@ -25,7 +25,6 @@ const Slider: FC<SliderProps> = ({
   const upperBound = 0.45
 
   useEffect(() => {
-    console.log(getInitialPos(lowerBound, upperBound))
     cap.current!.position.x = getInitialPos(lowerBound, upperBound)
   }, [])
 
@@ -41,7 +40,7 @@ const Slider: FC<SliderProps> = ({
 
       capOffset.current = cap.current!.position.x - planeIntersect.current.x
     },
-    onDrag: ({ event, active }) => {
+    onDrag: ({ event, active, direction: [x, y] }) => {
       event.stopPropagation()
 
       if (active && group.current) {
@@ -55,11 +54,15 @@ const Slider: FC<SliderProps> = ({
 
         const dragPos = clamp(correctedPos, lowerBound, upperBound)
         
+        if ((x === 0 && y === 0)
+        || (dragPos === lowerBound && value.current === minVal)
+        || (dragPos === upperBound && value.current === maxVal)) return
+        
         cap.current!.position.x = dragPos
 
         const newValue = getTaperedValue(dragPos, lowerBound, upperBound)
 
-        setValue(newValue)
+        value.current = newValue
         if (typeof onChange === 'function') onChange(newValue)
       }
     },
@@ -72,14 +75,22 @@ const Slider: FC<SliderProps> = ({
     },
     onWheel: ({ event, movement: [_, y]}) => {
       event.stopPropagation()
+
       if (orbit.current === null
-      || cap.current === null) return
+      || cap.current === null
+      || (y < 0 && value.current === minVal)
+      || (y > 0 && value.current === maxVal)) return
 
       orbit.current.enableZoom = false
         
-      const newPos = cap.current.position.x + degToRad(y/100)
+      const newPos = clamp(cap.current.position.x + degToRad(y/100), lowerBound, upperBound)
 
-      cap.current.position.x = clamp(newPos, lowerBound, upperBound)
+      cap.current.position.x = newPos
+
+      const newValue = getTaperedValue(newPos, lowerBound, upperBound)
+
+      value.current = newValue
+      if (typeof onChange === 'function') onChange(newValue)
     },
     onWheelEnd: () => { 
       if (orbit.current) orbit.current.enableZoom = true 

@@ -1,14 +1,13 @@
 import { useSpring, a } from '@react-spring/three'
-import { FC, useRef, useState } from 'react'
+import { FC, useRef } from 'react'
 import { getSteps } from '../../../utils'
 import { SlideSwitchProps } from './types'
 import { initializeSlideSwitch } from './utils'
 import { handleInteraction } from '../../../utils'
 import { useGesture } from '@use-gesture/react'
-import { clamp } from 'three/src/math/MathUtils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
 import { Vector3 } from 'three'
-import { invertQuaternion } from '../../../../helpers'
+import { invertQuaternion, clamp } from '../../../../helpers'
 
 const SlideSwitch: FC<SlideSwitchProps> = ({
   onChange, 
@@ -18,14 +17,13 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
 }) => {
   const { base, steps, stepValues } = initializeSlideSwitch(defaults)
   const stepPositions = getSteps(-0.45, 0.45, steps)
-  const orbit = useOrbit()
-  const [step, setStep] = useState(base - 1)
-  const group = useRef<THREE.Group | null>(null)
   const planeIntersect = useRef(new Vector3())
-  const delayScroll = useRef(false)
+  const group = useRef<THREE.Group | null>(null)
   const cap = useRef<THREE.Mesh | null>(null)
+  const delayScroll = useRef(false)
+  const step = useRef(base - 1)
   const capOffset= useRef(0)
-
+  const orbit = useOrbit()
 
   const dragBind = useGesture({
     onDragStart: ({ event }) => {
@@ -51,8 +49,8 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
         
         const dragPos = clamp(planeIntersect.current.x + capOffset.current, -0.45, 0.45)
 
-        const next = dragPos >= stepPositions[step + 1]
-        const prev = dragPos <= stepPositions[step - 1]
+        const next = dragPos >= stepPositions[step.current + 1]
+        const prev = dragPos <= stepPositions[step.current - 1]
         const dir = next ? 1 : prev ? -1 : null
 
         if (dir) handleStepChange(dir)
@@ -65,7 +63,9 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
     onWheelStart: () => {
       if (orbit.current) orbit.current.enableZoom = false
     },
-    onWheel: ({ direction: [_, y]}) => {
+    onWheel: ({ event, direction: [_, y]}) => {  
+      event.stopPropagation()
+
       if (delayScroll.current === true) return
 
       delayScroll.current = true
@@ -77,26 +77,21 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
       if (orbit.current) orbit.current.enableZoom = true
     }
   })
-  
-  const { x } = useSpring({
-    x: stepPositions[step],
-    config: { mass: 1, tension: 2000, friction: 0, precision: 0.05, bounce: 0 }
-  })
 
   const handleStepChange = (direction: number) => {
-    setStep((prevStep: number) => {
-      const newStep = clamp(prevStep + direction, 0, steps - 1)
-
-        if (newStep === prevStep) return prevStep
-
-        if (typeof onChange === 'function') onChange({ 
-          step: newStep + 1, 
-          value: stepValues[newStep]
-        })
-
-        return newStep
+    step.current = clamp(step.current + direction, 0, steps - 1)
+    api.set({ x: stepPositions[step.current] })
+    
+    if (typeof onChange === 'function') onChange({ 
+      step: step.current + 1, 
+      value: stepValues[step.current]
     })
   }
+  
+  const [{ x }, api ] = useSpring(() => ({ 
+    x: stepPositions[step.current], 
+    config: { mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0 }
+  }))
 
   return (
     <group rotation={[0, 0, 0]}

@@ -7,7 +7,7 @@ export const initializeRotarySwitch = (defaults: SwitchConfig | undefined) => {
         maxVal = defaults?.maxVal || 1,
         base   = defaults?.base   || 4,
         steps  = defaults?.steps  || 10,
-        torque = defaults?.torque || 40,
+        torque = defaults?.torque || 15,
         minDeg = defaults?.minDeg || -135,
         maxDeg = defaults?.maxDeg || 135
 
