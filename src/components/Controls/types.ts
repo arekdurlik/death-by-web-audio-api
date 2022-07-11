@@ -8,19 +8,19 @@ export type InitialState = {
   [key: string]: {
     type: 'RotaryKnob',
     defaults: KnobConfig
-    props: KnobProps 
+    props: any 
   } | {
     type: 'RotarySwitch',
     defaults: SwitchConfig
-    props: SwitchProps
+    props: any
   } | {
     type: 'SlideSwitch',
     defaults: SlideSwitchConfig
-    props: SlideSwitchProps
+    props: any
   } | {
     type: 'Slider',
     defaults: SliderConfig
-    props: SliderProps
+    props: any
   }
 }
 

@@ -80,7 +80,7 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
 
   const handleStepChange = (direction: number) => {
     step.current = clamp(step.current + direction, 0, steps - 1)
-    api.set({ x: stepPositions[step.current] })
+    api.start({ x: stepPositions[step.current] })
     
     if (typeof onChange === 'function') onChange({ 
       step: step.current + 1, 

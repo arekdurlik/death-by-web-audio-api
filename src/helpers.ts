@@ -24,6 +24,15 @@ export const range = (x1: number, y1: number, x2: number, y2: number, a: number)
   return lerp(x2, y2, invlerp(x1, y1, a))
 }
 
+export const smod = (x: number, m: number) => {
+  return x - ((Math.floor(x / m + 0.5)) * m)
+}
+
+export const clip360 = (x: number) => {
+  x = x % 360
+  return (x < 0) ? x + 360 : x
+}
+
 export const invertQuaternion = (quaternion: Quaternion) => {
   return new Quaternion(
     -quaternion.x,

@@ -56,7 +56,7 @@ const RotarySwitch: FC<SwitchProps> = ({
   
   const handleStepChange = (direction: number) => {
     step.current = clamp(step.current - direction, 0, steps - 1)
-    api.set({ rotation: stepRotations[step.current] })
+    api.start({ rotation: stepRotations[step.current] })
 
     if (typeof onChange === 'function') onChange({ 
       step: step.current + 1, 

@@ -2,6 +2,7 @@ export type KnobProps = {
   id?: string | number,
   onChange?: (value: Value) => void
   defaults?: KnobConfig
+  plane?: THREE.Plane
   [x:string]: any
 }
 
@@ -11,8 +12,6 @@ export type KnobConfig = {
   base?: number
   ramp?: number
   curve?: number
-  minDeg?: number
-  maxDeg?: number
   value?: number
 } 
 

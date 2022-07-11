@@ -4,7 +4,7 @@ import { initializeSlider } from './utils'
 import { handleInteraction } from '../../utils'
 import { useGesture } from '@use-gesture/react'
 import { useOrbit } from '../../../contexts/OrbitContext'
-import { Plane, Vector3 } from 'three'
+import { Vector3 } from 'three'
 import { clamp, degToRad } from 'three/src/math/MathUtils'
 import { invertQuaternion } from '../../../helpers'
 
