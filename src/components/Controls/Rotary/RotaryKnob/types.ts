@@ -9,7 +9,7 @@ export type KnobProps = {
 export type KnobConfig = {
   minVal?: number
   maxVal?: number
-  base?: number
+  baseVal?: number
   ramp?: number
   curve?: number
   value?: number

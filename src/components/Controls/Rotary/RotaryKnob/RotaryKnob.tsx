@@ -1,10 +1,10 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { clamp, degToRad, radToDeg } from 'three/src/math/MathUtils'
 import { KnobProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
-import { clip360, invertQuaternion, invlerp, lerp, smod, taper } from '../../../../helpers'
+import { clip360, smod } from '../../../../helpers'
 import { Plane, Vector3 } from 'three'
 import { usePrevious } from '../../../../hooks/usePrevious'
 import { initializeKnob } from './utils'
@@ -17,9 +17,10 @@ const RotaryKnob: FC<KnobProps> = ({
   rotation,
   ...props 
 }) => {
-  const { minVal, maxVal, baseVal, minDeg, maxDeg, degToVal, valToRad } = initializeKnob(defaults)
+  const { minVal, maxVal, baseVal, minDeg, maxDeg, degToVal, valToRad } = initializeKnob(defaults, id)
 
   const [internalVal, setInternalVal] = useState(0)
+  const prevInternalVal = usePrevious(internalVal)
   const [isMin, setIsMin] = useState(false)
   const [isMax, setIsMax] = useState(false)
   const [correctedDeg, setCorrectedDeg] = useState(0)
@@ -36,8 +37,8 @@ const RotaryKnob: FC<KnobProps> = ({
 
   useEffect(() => {
     const initRad = valToRad(baseVal)
-    knob.current!.rotation.y = initRad
-    endDeg.current = clip360(radToDeg(-initRad))
+    knob.current!.rotation.y = -initRad
+    endDeg.current = clip360(radToDeg(initRad))
     handleValueChange(baseVal)  
   }, [])
 
@@ -45,27 +46,28 @@ const RotaryKnob: FC<KnobProps> = ({
     if (dragging.current || valueProp === undefined) return
 
     const newRad = valToRad(valueProp)
-    knob.current!.rotation.y = newRad
+    knob.current!.rotation.y = -newRad
     startDeg.current = null
-    endDeg.current = clip360(radToDeg(-newRad))
+    endDeg.current = clip360(radToDeg(newRad))
   }, [valueProp])
-  
+
   const bind = useGesture({
     onDragStart: () => {
       dragging.current = true
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
     },
-    onDrag: ({ event }) => {
+    onDrag: ({ event, direction: [x,y] }) => {
       event.stopPropagation()
       
-      if (knob.current === null) return
+      if (knob.current === null
+      || (x === 0 && y === 0)) return
 
       const planeIntersect = new Vector3()
       
       // @ts-ignore Property does not exist
       event.ray.intersectPlane(plane, planeIntersect)
 
-      const knobPos = knob.current?.localToWorld(new Vector3())
+      const knobPos = knob.current.localToWorld(new Vector3())
 
       const newDeg = radToDeg(Math.atan2(
         knobPos.z - planeIntersect.z, 
@@ -75,15 +77,15 @@ const RotaryKnob: FC<KnobProps> = ({
       if (startDeg.current === null) startDeg.current = newDeg
       
       // offset new rotation by the distance to the old one so the knob stays in place on click
-      const clickDiff = endDeg.current - startDeg.current
-      const newCorrectedDeg = clip360(newDeg + clickDiff) 
+      const rotationDiff = endDeg.current - startDeg.current
+      const newCorrectedDeg = clip360(newDeg + rotationDiff) // 0-360
+      const symDeg = smod(newCorrectedDeg, 360) // -180-180
+      
       setCorrectedDeg(newCorrectedDeg)
-
       const difference = prevCorrectedDeg - newCorrectedDeg
-      const direction = difference < 0 ? 'cw' : 'ccw'
+      const direction = difference < 0 ? 'cw' : difference > 0 ? 'ccw' : null
       const maxDegChange = 90
 
- 
       // check if knob isn't out of bounds
       if (internalVal === maxVal && direction === 'cw') {
         setIsMax(true)
@@ -104,12 +106,10 @@ const RotaryKnob: FC<KnobProps> = ({
       
       if (isMin || isMax) return
 
-      // 0-360 to -180-180
-      const symDeg = smod(-newCorrectedDeg, 360)
-      knob.current!.rotation.y = degToRad(clamp(symDeg, minDeg, maxDeg))
+      knob.current.rotation.y = degToRad(clamp(-symDeg, minDeg, maxDeg))
 
-      const newVal = degToVal(symDeg) + minVal
-      if (newVal !== internalVal) handleValueChange(newVal)
+      const newVal = degToVal(symDeg)
+      handleValueChange(newVal)
     },
     onDragEnd: () => {
       if (orbit.current) orbit.current.enableZoom = true
@@ -122,6 +122,12 @@ const RotaryKnob: FC<KnobProps> = ({
 
   const handleValueChange = (value: number) => {
     setInternalVal(value)
+
+    // suppress changes in value caused by trying to drag the knob out of bounds
+    if (internalVal === maxVal
+    || internalVal === minVal
+    || prevInternalVal === value) return
+
     if (typeof onChange === 'function') onChange({
       ...(id) && {id},
       value: value
