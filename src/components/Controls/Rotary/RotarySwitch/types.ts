@@ -8,16 +8,15 @@ export type SwitchProps = {
 export type SwitchConfig = {
   minVal?: number
   maxVal?: number
-  minDeg?: number
-  maxDeg?: number
-  torque?: number
-  steps?: number
-  base?: number
+  stop?: boolean
+  lowerStepBound?: number,
+  upperStepBound?: number,
+  baseStep?: number,
   value?: number
 } 
 
 export type Value = {
   id?: string | number
-  value: number
-  step?: number
+  value?: number
+  step: number
 }

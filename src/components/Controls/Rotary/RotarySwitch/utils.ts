@@ -1,29 +1,46 @@
-import { degToRad } from 'three/src/math/MathUtils'
 import { getSteps } from '../../../utils'
 import { SwitchConfig } from './types'
 
-export const initializeRotarySwitch = (defaults: SwitchConfig | undefined) => {
-  const minVal = defaults?.minVal || 0,
-        maxVal = defaults?.maxVal || 1,
-        base   = defaults?.base   || 4,
-        steps  = defaults?.steps  || 10,
-        torque = defaults?.torque || 15,
-        minDeg = defaults?.minDeg || -135,
-        maxDeg = defaults?.maxDeg || 135
+export const initializeRotarySwitch = (
+  defaults: SwitchConfig | undefined,
+  id: string | number | undefined
+) => {
+  let {
+    stop = true, 
+    lowerStepBound = null, 
+    upperStepBound = null, 
+    baseStep = 0, 
+    minVal = null, 
+    maxVal = null 
+  } = {...defaults}
+  
+  const steps  = 12
+  const minDeg = -165 
+  const maxDeg = 165
+  const stepDegrees = getSteps(minDeg, maxDeg, steps).reverse()
+  const stepValues = (minVal !== null && maxVal !== null) ? getSteps(minVal, maxVal, steps) : []
+  const stepGap = Math.abs(stepDegrees[0] - stepDegrees[1])
 
-  const minRad        = degToRad(minDeg),
-        maxRad        = degToRad(maxDeg),
-        stepRotations = getSteps(minRad, maxRad, steps).reverse(),
-        stepValues    = getSteps(minVal, maxVal, steps)
+  // TODO cleanup this mess
+  lowerStepBound = lowerStepBound !== null ? lowerStepBound : upperStepBound !== null ? 0 : null
+  upperStepBound = upperStepBound !== null ? upperStepBound : lowerStepBound !== null ? steps - 1 : null
+  stop = stop ? stop : lowerStepBound !== null && upperStepBound !== null ? true : false
+
+  if ((minVal === null && maxVal !== null) || (minVal !== null && maxVal === null)) throw new Error('_')
 
   return { 
-    base, 
+    minVal,
+    maxVal,
+    stop,
+    lowerStepBound,
+    upperStepBound,
+    baseStep,
     steps, 
-    torque, 
     minDeg, 
-    maxDeg, 
-    stepRotations, 
-    stepValues 
+    maxDeg,
+    stepDegrees, 
+    stepValues,
+    stepGap 
   }
 }
 
