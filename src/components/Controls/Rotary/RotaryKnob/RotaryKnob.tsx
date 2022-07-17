@@ -27,7 +27,6 @@ const RotaryKnob: FC<KnobProps> = ({
   const prevCorrectedDeg = usePrevious(correctedDeg)
   
   const plane = new Plane(new Vector3(0, 1, 0), 0)
-  const group = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
   const dragging = useRef(false)
   const startDeg = useRef<number | null>(null)
@@ -113,7 +112,7 @@ const RotaryKnob: FC<KnobProps> = ({
     },
     onDragEnd: () => {
       if (orbit.current) orbit.current.enableZoom = true
-      dragging.current = true
+      dragging.current = false
       startDeg.current = null
       endDeg.current = radToDeg(-knob.current!.rotation.y)
     },
@@ -123,20 +122,19 @@ const RotaryKnob: FC<KnobProps> = ({
   const handleValueChange = (value: number) => {
     setInternalVal(value)
 
-    // suppress changes in value caused by trying to drag the knob out of bounds
-    if (internalVal === maxVal
-    || internalVal === minVal
-    || prevInternalVal === value) return
+    if (typeof onChange === 'function') {
 
-    if (typeof onChange === 'function') onChange({
-      ...(id) && {id},
-      value: value
-    })
+      // suppress changes in value caused by trying to drag the knob out of bounds
+      if (internalVal === maxVal
+      || internalVal === minVal
+      || prevInternalVal === value) return
+
+      onChange({ ...(id) && {id}, value: value })
+    }
   }
 
   return (
     <group 
-      ref={group} 
       rotation={rotation}
     >
       <group

@@ -13,13 +13,6 @@ const knobDefaults = {
   base: 2
 }
 
-const switchDefaults = {
-  minVal: 0,
-  maxVal: 10,
-  steps: 8, 
-  base: 5
-}
-
 const App = () => {
   const plane = new Plane(new Vector3(0, 1, 0), 0);
 
@@ -30,13 +23,6 @@ const App = () => {
           <span>initial rotary knob state:</span>
           <pre>
             {JSON.stringify(knobDefaults, null, 2)}
-          </pre>
-        </div>
-
-        <div>
-          <span>initial rotary switch state:</span>
-          <pre>
-            {JSON.stringify(switchDefaults, null, 2)}
           </pre>
         </div>
       </div>
@@ -58,7 +44,6 @@ const App = () => {
           <RotarySwitch 
             position={[2, 0, 0]}
             onChange={console.log}
-            defaults={switchDefaults}
             />
           <SlideSwitch
             position={[0, 0, -1]}

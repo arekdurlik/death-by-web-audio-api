@@ -4,7 +4,7 @@ import { KnobConfig } from './types'
 
 export const initializeKnob = (
   defaults: KnobConfig | undefined, 
-  id: (string | number | undefined)
+  id: string | number | undefined
 ) => {
   let { minVal = 0, maxVal = 1, baseVal, curve = 1} = {...defaults}
   const minDeg = -135, maxDeg = 135 
