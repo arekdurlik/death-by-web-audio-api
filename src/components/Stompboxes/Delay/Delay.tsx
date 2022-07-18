@@ -55,6 +55,7 @@ const Delay = () => {
       <RotaryKnob
         onChange={console.log}
         position={[-5,0,0]}
+        rotation={[Math.PI / 2.3, 0, 0]}
       />
     </>
   )

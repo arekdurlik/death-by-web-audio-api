@@ -4,7 +4,7 @@ import { clamp, degToRad, radToDeg } from 'three/src/math/MathUtils'
 import { KnobProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
-import { clip360, smod } from '../../../../helpers'
+import { clip360, invertQuaternion, smod } from '../../../../helpers'
 import { Plane, Vector3 } from 'three'
 import { usePrevious } from '../../../../hooks/usePrevious'
 import { initializeKnob } from './utils'
@@ -26,12 +26,12 @@ const RotaryKnob: FC<KnobProps> = ({
   const [correctedDeg, setCorrectedDeg] = useState(0)
   const prevCorrectedDeg = usePrevious(correctedDeg)
   
-  const plane = new Plane(new Vector3(0, 1, 0), 0)
+  const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
+  const group = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
   const dragging = useRef(false)
   const startDeg = useRef<number | null>(null)
   const endDeg = useRef(minDeg)
-  
   const orbit = useOrbit()
 
   useEffect(() => {
@@ -40,6 +40,12 @@ const RotaryKnob: FC<KnobProps> = ({
     endDeg.current = clip360(radToDeg(initRad))
     handleValueChange(baseVal)  
   }, [])
+
+  useEffect(() => {
+    if (group.current === null || knob.current === null) return
+
+    plane.current.normal.applyQuaternion(group.current.quaternion)
+  }, [group, plane])
 
   useEffect(() => {
     if (dragging.current || valueProp === undefined) return
@@ -58,13 +64,16 @@ const RotaryKnob: FC<KnobProps> = ({
     onDrag: ({ event, direction: [x,y] }) => {
       event.stopPropagation()
       
-      if (knob.current === null
+      if (group.current === null
+      || knob.current === null
       || (x === 0 && y === 0)) return
 
       const planeIntersect = new Vector3()
       
       // @ts-ignore Property does not exist
-      event.ray.intersectPlane(plane, planeIntersect)
+      event.ray.intersectPlane(plane.current, planeIntersect)
+
+      planeIntersect.applyQuaternion(invertQuaternion(group.current.quaternion))
 
       const knobPos = knob.current.localToWorld(new Vector3())
 
@@ -135,6 +144,7 @@ const RotaryKnob: FC<KnobProps> = ({
 
   return (
     <group 
+      ref={group}
       rotation={rotation}
     >
       <group
