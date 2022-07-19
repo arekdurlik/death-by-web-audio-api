@@ -72,10 +72,11 @@ const RotaryKnob: FC<KnobProps> = ({
       
       // @ts-ignore Property does not exist
       event.ray.intersectPlane(plane.current, planeIntersect)
-
-      planeIntersect.applyQuaternion(invertQuaternion(group.current.quaternion))
-
+      
       const knobPos = knob.current.localToWorld(new Vector3())
+      
+      planeIntersect.applyQuaternion(invertQuaternion(group.current.quaternion))
+      knobPos.applyQuaternion(invertQuaternion(group.current.quaternion))
 
       const newDeg = radToDeg(Math.atan2(
         knobPos.z - planeIntersect.z, 
@@ -132,13 +133,15 @@ const RotaryKnob: FC<KnobProps> = ({
     setInternalVal(value)
 
     if (typeof onChange === 'function') {
-
       // suppress changes in value caused by trying to drag the knob out of bounds
       if (internalVal === maxVal
       || internalVal === minVal
       || prevInternalVal === value) return
 
-      onChange({ ...(id) && {id}, value: value })
+      onChange({ 
+        ...(id) && {id}, 
+        value: value 
+      })
     }
   }
 
