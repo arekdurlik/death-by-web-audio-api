@@ -1,8 +1,7 @@
-import { FC, ReactNode } from 'react'
-import { KnobConfig, KnobProps } from './Rotary/RotaryKnob/types'
-import { SwitchConfig, SwitchProps } from './Rotary/RotarySwitch/types'
-import { SliderConfig, SliderProps } from './Slider/types'
-import { SlideSwitchConfig, SlideSwitchProps } from './Switch/SlideSwitch/types'
+import { KnobConfig } from './Rotary/RotaryKnob/types'
+import { RotarySwitchConfig } from './Rotary/RotarySwitch/types'
+import { SliderConfig } from './Slider/types'
+import { SlideSwitchConfig } from './Switch/SlideSwitch/types'
 
 export type InitialState = {
   [key: string]: {
@@ -11,7 +10,7 @@ export type InitialState = {
     props: any 
   } | {
     type: 'RotarySwitch',
-    defaults: SwitchConfig
+    defaults: RotarySwitchConfig
     props: any
   } | {
     type: 'SlideSwitch',
@@ -24,7 +23,7 @@ export type InitialState = {
   }
 }
 
-type ControlConfig = KnobConfig | SwitchConfig | SliderConfig | SlideSwitchConfig
+type ControlConfig = KnobConfig | RotarySwitchConfig | SliderConfig | SlideSwitchConfig
 
 export type Action = {
   type: string

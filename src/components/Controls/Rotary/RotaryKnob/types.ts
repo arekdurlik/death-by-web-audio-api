@@ -15,8 +15,18 @@ export type KnobConfig = {
   value?: number
 } 
 
+export type RotaryKnobInit = {
+  minVal: number 
+  maxVal: number
+  baseVal: number 
+  minDeg: number
+  maxDeg: number
+  degToVal: Function
+  valToRad: Function
+}
+
 export type Value = {
   id?: string | number
-  value: number
+  value?: number
   step?: number
 }

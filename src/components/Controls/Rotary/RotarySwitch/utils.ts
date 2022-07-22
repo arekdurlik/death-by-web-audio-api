@@ -1,19 +1,19 @@
 import { getSteps } from '../../../utils'
-import { SwitchConfig } from './types'
+import { RotarySwitchConfig, RotarySwitchInit } from './types'
 
 export const initializeRotarySwitch = (
-  defaults: SwitchConfig | undefined,
+  defaults: RotarySwitchConfig | undefined,
   id: string | number | undefined
-) => {
+): RotarySwitchInit => {
   let {
-    stop = true, 
+    stop = false, 
     lowerStepBound = null, 
     upperStepBound = null, 
     baseStep = 0, 
     minVal = null, 
     maxVal = null 
   } = {...defaults}
-  
+
   const steps  = 12
   const minDeg = -165 
   const maxDeg = 165
@@ -29,18 +29,17 @@ export const initializeRotarySwitch = (
   if ((minVal === null && maxVal !== null) || (minVal !== null && maxVal === null)) throw new Error('_')
 
   return { 
-    minVal,
-    maxVal,
     stop,
     lowerStepBound,
     upperStepBound,
     baseStep,
     steps, 
-    minDeg, 
-    maxDeg,
     stepDegrees, 
     stepValues,
     stepGap 
   }
 }
 
+export const RotarySwitchSpring = { 
+  mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0
+}

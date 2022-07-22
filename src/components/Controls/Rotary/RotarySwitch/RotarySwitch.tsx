@@ -1,43 +1,59 @@
 import { useGesture } from '@use-gesture/react'
-import { FC, useRef, useState } from 'react'
-import { initializeRotarySwitch } from './utils'
-import { SwitchProps } from './types'
+import { FC, useEffect, useRef, useState } from 'react'
+import { initializeRotarySwitch, RotarySwitchSpring } from './utils'
+import { RotarySwitchInit, RotarySwitchProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useSpring, a } from '@react-spring/three'
 import { useOrbit } from '../../../../contexts/OrbitContext'
-import { clip360, smod } from '../../../../helpers'
+import { clip360, invertQuaternion, smod } from '../../../../helpers'
 import { Plane, Vector3 } from 'three'
 import { degToRad, radToDeg } from 'three/src/math/MathUtils'
 import { usePrevious } from '../../../../hooks/usePrevious'
 
-const RotarySwitch: FC<SwitchProps> = ({ 
+const RotarySwitch: FC<RotarySwitchProps> = ({ 
   id, 
   onChange, 
   defaults, 
   ...props 
 }) => {
-  // TODO somehow move this to useEffect
-  const { 
-    stop,
-    lowerStepBound,
-    upperStepBound,
-    baseStep,
-    steps, 
-    stepValues, 
-    stepDegrees, 
-    stepGap, 
-    minVal,
-    maxVal
-  } = initializeRotarySwitch(defaults, id)
+   const [{
+    stop, lowerStepBound, upperStepBound, baseStep, steps, stepValues, stepDegrees, stepGap
+   }, setInit]= useState({} as RotarySwitchInit)
   const [correctedDeg, setCorrectedDeg] = useState(0)
   const prevCorrectedDeg = usePrevious(correctedDeg)
-  const totalDegrees = useRef(stepDegrees[baseStep])
-  const plane = new Plane(new Vector3(0, 1, 0), 0)
+  const totalDegrees = useRef(0)
+  const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
+  const control = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
-  const step = useRef(baseStep)
+  const step = useRef(0)
   const orbit = useOrbit()
   const dragging = useRef(false)
   const startDeg = useRef<number | null>(null)
+  const planeOffset = 0.25
+  const [{ rotation }, spring ] = useSpring(() => ({
+    rotation: 0, config: RotarySwitchSpring
+  }))
+
+  useEffect(() => {
+    setInit(initializeRotarySwitch(defaults, id))
+  }, [])
+
+  useEffect(() => {
+    if (stepDegrees === undefined
+    || baseStep === undefined) return
+
+    totalDegrees.current = stepDegrees[baseStep]
+    step.current = baseStep
+    spring.set({ rotation: degToRad(totalDegrees.current) })
+  }, [stepDegrees, baseStep, spring])
+
+  useEffect(() => {
+    if (control.current === null) return
+
+    control.current.updateMatrixWorld()
+    plane.current.translate(new Vector3(0, planeOffset, 0))
+    plane.current.applyMatrix4(control.current.matrixWorld)
+  }, [control])
 
   const bind = useGesture({
     onDragStart: () => {
@@ -48,14 +64,18 @@ const RotarySwitch: FC<SwitchProps> = ({
       event.stopPropagation()
       
       if (knob.current === null
+      || control.current === null
       || (x === 0 && y === 0)) return
 
       const planeIntersect = new Vector3()
       
       // @ts-ignore Property does not exist
-      event.ray.intersectPlane(plane, planeIntersect)
+      event.ray.intersectPlane(plane.current, planeIntersect)
 
       const knobPos = knob.current.localToWorld(new Vector3())
+
+      planeIntersect.applyQuaternion(invertQuaternion(control.current.quaternion))
+      knobPos.applyQuaternion(invertQuaternion(control.current.quaternion))
 
       const newDeg = radToDeg(Math.atan2(
         knobPos.z - planeIntersect.z, 
@@ -90,7 +110,7 @@ const RotarySwitch: FC<SwitchProps> = ({
         totalDegrees.current += stepGap
       } else return
 
-      api.start({ rotation: degToRad(totalDegrees.current) })
+      spring.start({ rotation: degToRad(totalDegrees.current) })
       handleStepChange()
     },
     onDragEnd: () => {
@@ -105,31 +125,30 @@ const RotarySwitch: FC<SwitchProps> = ({
     
     if (typeof onChange === 'function') onChange({ 
       step: step.current, 
-      ...(minVal !== null && maxVal !== null) && {value: stepValues[step.current]} 
+      ...(stepValues.length) && {value: stepValues[step.current]} 
     })
   }
 
-  const [{ rotation }, api ] = useSpring(() => ({
-      rotation: degToRad(totalDegrees.current), 
-      config: { mass: 1, tension: 2000, friction: 100, precision: 0.01, bounce: 0}, immediate: true
-  }))
-
   return (
-    <a.group 
-      ref={knob}
-      rotation-y={rotation} 
-      {...bind() as any} 
+    <group 
+      ref={control}
       {...props}
     >
-      <mesh>
-        <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
-        <meshLambertMaterial color="hotpink"/>
-      </mesh>
-      <mesh position={[0, 0.5, -0.5]}>
-        <boxBufferGeometry args={[0.2, 0.1, 1]}/>
-        <meshBasicMaterial color="white"/>
-      </mesh>
-    </a.group>
+      <a.group 
+        ref={knob}
+        rotation-y={rotation} 
+        {...bind() as any} 
+      >
+        <mesh>
+          <cylinderBufferGeometry args={[1, 1, 1, 64]}/>
+          <meshLambertMaterial color="hotpink"/>
+        </mesh>
+        <mesh position={[0, 0.5, -0.5]}>
+          <boxBufferGeometry args={[0.2, 0.1, 1]}/>
+          <meshBasicMaterial color="white"/>
+        </mesh>
+      </a.group>
+    </group>
   )
 }
 

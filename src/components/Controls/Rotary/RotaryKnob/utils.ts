@@ -1,11 +1,11 @@
 import { degToRad, lerp } from 'three/src/math/MathUtils'
 import { invlerp, taper } from '../../../../helpers'
-import { KnobConfig } from './types'
+import { KnobConfig, RotaryKnobInit } from './types'
 
 export const initializeKnob = (
   defaults: KnobConfig | undefined, 
   id: string | number | undefined
-) => {
+): RotaryKnobInit => {
   let { minVal = 0, maxVal = 1, baseVal, curve = 1} = {...defaults}
   const minDeg = -135, maxDeg = 135 
 
@@ -20,6 +20,7 @@ export const initializeKnob = (
     const value = lerp(minVal, maxVal, fraction)
     return taper(value, maxVal, minVal, curve) // curve > 1 - logarithmic growth, curve < 1 - exponential growth
   } 
+  
   const valToRad = (value: number) => {
     const fraction = invlerp(minVal, maxVal, value)
     const rotation = lerp(minDeg, maxDeg, fraction)
@@ -31,7 +32,6 @@ export const initializeKnob = (
     minVal, 
     maxVal, 
     baseVal, 
-    curve, 
     minDeg,
     maxDeg,
     degToVal, 

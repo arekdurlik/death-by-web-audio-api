@@ -1,7 +1,7 @@
 import { useGesture } from '@use-gesture/react'
 import { FC, useEffect, useRef, useState } from 'react'
 import { clamp, degToRad, radToDeg } from 'three/src/math/MathUtils'
-import { KnobProps } from './types'
+import { KnobProps, RotaryKnobInit } from './types'
 import { handleInteraction } from '../../../utils'
 import { useOrbit } from '../../../../contexts/OrbitContext'
 import { clip360, invertQuaternion, smod } from '../../../../helpers'
@@ -14,11 +14,11 @@ const RotaryKnob: FC<KnobProps> = ({
   onChange,
   value: valueProp,
   defaults,
-  rotation,
   ...props 
 }) => {
-  const { minVal, maxVal, baseVal, minDeg, maxDeg, degToVal, valToRad } = initializeKnob(defaults, id)
-
+  const [{
+    minVal, maxVal, baseVal, minDeg, maxDeg, degToVal, valToRad
+  }, setInit] = useState({} as RotaryKnobInit)
   const [internalVal, setInternalVal] = useState(0)
   const prevInternalVal = usePrevious(internalVal)
   const [isMin, setIsMin] = useState(false)
@@ -27,25 +27,35 @@ const RotaryKnob: FC<KnobProps> = ({
   const prevCorrectedDeg = usePrevious(correctedDeg)
   
   const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
-  const group = useRef<THREE.Group | null>(null)
+  const control = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
   const dragging = useRef(false)
   const startDeg = useRef<number | null>(null)
   const endDeg = useRef(minDeg)
   const orbit = useOrbit()
+  const planeOffset = 0.25
 
   useEffect(() => {
+    setInit(initializeKnob(defaults, id))
+  }, [])
+
+  useEffect(() => {
+    if (baseVal === undefined 
+    || valToRad === undefined) return
+
     const initRad = valToRad(baseVal)
     knob.current!.rotation.y = -initRad
     endDeg.current = clip360(radToDeg(initRad))
     handleValueChange(baseVal)  
-  }, [])
+  }, [baseVal, valToRad])
 
   useEffect(() => {
-    if (group.current === null || knob.current === null) return
+    if (control.current === null) return
 
-    plane.current.normal.applyQuaternion(group.current.quaternion)
-  }, [group, plane])
+    control.current.updateMatrixWorld()
+    plane.current.translate(new Vector3(0, planeOffset, 0))
+    plane.current.applyMatrix4(control.current.matrixWorld)
+  }, [control])
 
   useEffect(() => {
     if (dragging.current || valueProp === undefined) return
@@ -54,7 +64,7 @@ const RotaryKnob: FC<KnobProps> = ({
     knob.current!.rotation.y = -newRad
     startDeg.current = null
     endDeg.current = clip360(radToDeg(newRad))
-  }, [valueProp])
+  }, [valueProp, valToRad])
 
   const bind = useGesture({
     onDragStart: () => {
@@ -64,7 +74,7 @@ const RotaryKnob: FC<KnobProps> = ({
     onDrag: ({ event, direction: [x,y] }) => {
       event.stopPropagation()
       
-      if (group.current === null
+      if (control.current === null
       || knob.current === null
       || (x === 0 && y === 0)) return
 
@@ -75,8 +85,8 @@ const RotaryKnob: FC<KnobProps> = ({
       
       const knobPos = knob.current.localToWorld(new Vector3())
       
-      planeIntersect.applyQuaternion(invertQuaternion(group.current.quaternion))
-      knobPos.applyQuaternion(invertQuaternion(group.current.quaternion))
+      planeIntersect.applyQuaternion(invertQuaternion(control.current.quaternion))
+      knobPos.applyQuaternion(invertQuaternion(control.current.quaternion))
 
       const newDeg = radToDeg(Math.atan2(
         knobPos.z - planeIntersect.z, 
@@ -147,13 +157,12 @@ const RotaryKnob: FC<KnobProps> = ({
 
   return (
     <group 
-      ref={group}
-      rotation={rotation}
+      ref={control}
+      {...props} 
     >
       <group
         ref={knob}
         {...bind() as any} 
-        {...props}
       >
         <mesh>
           <cylinderBufferGeometry args={[1, 1, 1, 64]}/>

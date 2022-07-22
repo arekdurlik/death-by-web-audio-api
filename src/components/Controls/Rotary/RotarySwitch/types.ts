@@ -1,11 +1,11 @@
-export type SwitchProps = {
+export type RotarySwitchProps = {
   id?: string | number,
   onChange?: (value: Value) => void
-  defaults?: SwitchConfig
+  defaults?: RotarySwitchConfig
   [x:string]: any
 }
 
-export type SwitchConfig = {
+export type RotarySwitchConfig = {
   minVal?: number
   maxVal?: number
   stop?: boolean
@@ -15,8 +15,19 @@ export type SwitchConfig = {
   value?: number
 } 
 
+export type RotarySwitchInit = {
+  stop: boolean
+  lowerStepBound: number | null
+  upperStepBound: number | null
+  baseStep: number
+  steps: number
+  stepDegrees: Array<number> 
+  stepValues: Array<number> 
+  stepGap: number 
+}
+
 export type Value = {
   id?: string | number
-  value?: number
   step: number
+  value?: number
 }

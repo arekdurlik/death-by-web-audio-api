@@ -6,26 +6,11 @@ import SlideSwitch from './components/Controls/Switch/SlideSwitch/SlideSwitch'
 import Delay from './components/Stompboxes/Delay/Delay'
 import { OrbitProvider } from './contexts/OrbitContext'
 
-const knobDefaults = {
-  minVal: 0,
-  maxVal: 4,
-  curve: 1,
-  base: 2
-}
-
 const App = () => {
   const plane = new Plane(new Vector3(0, 1, 0), 0);
 
   return (
     <>
-      <div className="debug">
-        <div>
-          <span>initial rotary knob state:</span>
-          <pre>
-            {JSON.stringify(knobDefaults, null, 2)}
-          </pre>
-        </div>
-      </div>
       <Canvas 
         dpr={2}
         camera={{ 
@@ -42,17 +27,18 @@ const App = () => {
 
         <OrbitProvider>
           <RotarySwitch 
-            position={[2, 0, 0]}
+            position={[2, 0, -4]}
+            rotation={[Math.PI / 2.5, 0, Math.PI / 4]}
             onChange={console.log}
             />
           <SlideSwitch
-            position={[0, 0, -1]}
+            position={[0, 0, -2]}
             onChange={console.log}
             plane={plane}
             />
           <Slider
-            position={[0, 0, 1]}
-            plane={plane}
+            position={[0, 0, 1.5]}
+            rotation={[-Math.PI/2.4, Math.PI/3, Math.PI/3]}
             onChange={console.log}
           />
           <Delay />
