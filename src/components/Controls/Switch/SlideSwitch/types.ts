@@ -7,7 +7,7 @@ export type SlideSwitchProps = {
 
 export type SlideSwitchConfig = {
   steps?: number
-  baseStep?: number
+  initialStep?: number
   length?: number
   minVal?: number
   maxVal?: number
@@ -15,7 +15,7 @@ export type SlideSwitchConfig = {
 
 export type SlideSwitchInit = {
   steps: number
-  baseStep: number
+  initialStep: number
   startPos: number
   endPos: number
   stepPositions: Array<number>

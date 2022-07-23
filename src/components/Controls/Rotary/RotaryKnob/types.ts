@@ -1,24 +1,23 @@
 export type KnobProps = {
   id?: string | number,
   onChange?: (value: Value) => void
-  defaults?: KnobConfig
+  defaults?: RotaryKnobConfig
   plane?: THREE.Plane
   [x:string]: any
 }
 
-export type KnobConfig = {
+export type RotaryKnobConfig = {
   minVal?: number
   maxVal?: number
-  baseVal?: number
+  initialVal?: number
   ramp?: number
   curve?: number
-  value?: number
 } 
 
 export type RotaryKnobInit = {
   minVal: number 
   maxVal: number
-  baseVal: number 
+  initialVal: number 
   minDeg: number
   maxDeg: number
   degToVal: Function

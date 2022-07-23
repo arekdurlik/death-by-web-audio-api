@@ -9,34 +9,41 @@ import { Plane, Vector3 } from 'three'
 import { invertQuaternion, clamp } from '../../../../helpers'
 
 const SlideSwitch: FC<SlideSwitchProps> = ({
-  onChange, 
-  defaults,
-  ...props 
+  id, defaults, step: stepProp, onChange, ...props 
 }) => {
   const [{
-    steps, baseStep, stepPositions, stepValues, startPos, endPos
+    steps, initialStep, stepPositions, stepValues, startPos, endPos
   }, setInit] = useState({} as SlideSwitchInit)
+  const [internalStep, setInternalStep] = useState(0)
+
   const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
   const planeIntersect = useRef(new Vector3())
   const control = useRef<THREE.Group | null>(null)
   const cap = useRef<THREE.Mesh | null>(null)
   const delayScroll = useRef(false)
-  const step = useRef<number | null>()
-  const capOffset= useRef(0)
+  const capOffset= useRef<number | null>(null)
+
   const orbit = useOrbit()
   const [{ x }, spring] = useSpring(() => ({ x: 0, config: slideSwitchSpring }))
+  const firstStep = 0
+  const lastStep = steps - 1
 
   useEffect(() => {
     setInit(initializeSlideSwitch(defaults))
   }, [])
 
   useEffect(() => {
-    if (baseStep === undefined
-    || stepPositions === undefined) return
+    if (initialStep === undefined || stepPositions === undefined) return
 
-    step.current = baseStep
-    spring.set({ x: stepPositions[step.current] })
-  }, [spring, baseStep, stepPositions])
+    handleStepChange(initialStep, false)
+  }, [initialStep, spring, stepPositions])
+
+  useEffect(() => {
+    if (stepProp === undefined || stepProp === internalStep) return
+
+    const clampedStep = clamp(stepProp, firstStep, lastStep)
+    handleStepChange(clampedStep, false)
+  }, [stepProp])
 
   useEffect(() => {
     if (control.current === null) return
@@ -46,17 +53,6 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
   }, [control])
 
   const dragBind = useGesture({
-    onDragStart: ({ event }) => {
-      event.stopPropagation()
-
-      /* @ts-ignore Property does not exist */
-      event.ray.intersectPlane(plane.current, planeIntersect.current)
-        
-      const invertedQuaternion = invertQuaternion(control.current!.quaternion)
-      planeIntersect.current.applyQuaternion(invertedQuaternion)
-
-      capOffset.current = cap.current!.position.x - planeIntersect.current.x
-    },
     onDrag: ({ event }) => {
       event.stopPropagation()
 
@@ -67,20 +63,32 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
       
       const invertedQuaternion = invertQuaternion(control.current.quaternion)
       planeIntersect.current.applyQuaternion(invertedQuaternion)
+
+      if (capOffset.current === null) {
+        capOffset.current = cap.current!.position.x - planeIntersect.current.x
+      }
       
       const dragPos = clamp(planeIntersect.current.x + capOffset.current, startPos, endPos)
       
-      const next = dragPos >= stepPositions[step.current! + 1]
-      const prev = dragPos <= stepPositions[step.current! - 1]
-      const direction = next ? 1 : prev ? -1 : null
+      const next = dragPos >= stepPositions[internalStep + 1]
+      const prev = dragPos <= stepPositions[internalStep - 1]
+      const stepChange = next ? 1 : prev ? -1 : 0
+      const newStep = clamp(internalStep + stepChange, firstStep, lastStep)
 
-      if (direction) handleStepChange(direction)
+      handleStepChange(newStep)
+    },
+    onDragEnd: ({ event }) => {
+      event.stopPropagation()
+
+      capOffset.current = null
     },
     ...handleInteraction(orbit.current)
   })
 
   const wheelBind = useGesture({
-    onWheelStart: () => {
+    onWheelStart: ({ event }) => {
+      event.stopPropagation()
+
       if (orbit.current) orbit.current.enableZoom = false
     },
     onWheel: ({ event, direction: [_, y] }) => {  
@@ -90,21 +98,31 @@ const SlideSwitch: FC<SlideSwitchProps> = ({
 
       delayScroll.current = true
 
-      handleStepChange(y)
+      const newStep = clamp(internalStep + y, firstStep, lastStep)
+      handleStepChange(newStep)
       setTimeout(() => delayScroll.current = false, 200)
     },
-    onWheelEnd: () => {
+    onWheelEnd: ({ event }) => {
+      event.stopPropagation()
+
       if (orbit.current) orbit.current.enableZoom = true
     }
   })
 
-  const handleStepChange = (direction: number) => {
-    step.current = clamp(step.current! + direction, 0, steps - 1)
-    spring.start({ x: stepPositions[step.current] })
+  const handleStepChange = (newStep: number, animate = true) => {
+    if (newStep === internalStep || newStep === internalStep) return
+    setInternalStep(newStep)
+
+    if (animate) {
+      spring.start({ x: stepPositions[newStep] })
+    } else {
+      spring.set({ x: stepPositions[newStep] })
+    }
     
     if (typeof onChange === 'function') onChange({ 
-      step: step.current, 
-      ...(stepValues.length) && {value: stepValues[step.current]} 
+      ...(id) && {id},
+      step: newStep, 
+      ...(stepValues.length) && {value: stepValues[newStep]} 
     })
   }
 

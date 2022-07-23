@@ -10,65 +10,70 @@ import { usePrevious } from '../../../../hooks/usePrevious'
 import { initializeKnob } from './utils'
 
 const RotaryKnob: FC<KnobProps> = ({
-  id, 
-  onChange,
-  value: valueProp,
-  defaults,
-  ...props 
+  id, defaults, value: valueProp, onChange, ...props
 }) => {
   const [{
-    minVal, maxVal, baseVal, minDeg, maxDeg, degToVal, valToRad
+    minVal, maxVal, initialVal, minDeg, maxDeg, degToVal, valToRad
   }, setInit] = useState({} as RotaryKnobInit)
   const [internalVal, setInternalVal] = useState(0)
-  const prevInternalVal = usePrevious(internalVal)
+  const [correctedDeg, setCorrectedDeg] = useState(0)
   const [isMin, setIsMin] = useState(false)
   const [isMax, setIsMax] = useState(false)
-  const [correctedDeg, setCorrectedDeg] = useState(0)
+  const prevInternalVal = usePrevious(internalVal)
   const prevCorrectedDeg = usePrevious(correctedDeg)
   
   const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
+  const planeIntersect = useRef(new Vector3())
   const control = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
-  const dragging = useRef(false)
   const startDeg = useRef<number | null>(null)
-  const endDeg = useRef(minDeg)
+  const endDeg = useRef<number | null>(null)
   const orbit = useOrbit()
-  const planeOffset = 0.25
 
   useEffect(() => {
     setInit(initializeKnob(defaults, id))
   }, [])
 
   useEffect(() => {
-    if (baseVal === undefined 
-    || valToRad === undefined) return
+    if (initialVal === undefined) return
 
-    const initRad = valToRad(baseVal)
+    const initRad = valToRad(initialVal)
     knob.current!.rotation.y = -initRad
     endDeg.current = clip360(radToDeg(initRad))
-    handleValueChange(baseVal)  
-  }, [baseVal, valToRad])
+    handleValueChange(initialVal)  
+  }, [initialVal])
 
   useEffect(() => {
-    if (control.current === null) return
-
-    control.current.updateMatrixWorld()
-    plane.current.translate(new Vector3(0, planeOffset, 0))
-    plane.current.applyMatrix4(control.current.matrixWorld)
-  }, [control])
-
-  useEffect(() => {
-    if (dragging.current || valueProp === undefined) return
+    if (valueProp === undefined || valueProp === internalVal) return
 
     const newRad = valToRad(valueProp)
     knob.current!.rotation.y = -newRad
     startDeg.current = null
     endDeg.current = clip360(radToDeg(newRad))
-  }, [valueProp, valToRad])
 
-  const bind = useGesture({
-    onDragStart: () => {
-      dragging.current = true
+    if (valueProp === minVal) {
+      setIsMin(true)
+      setIsMax(false)
+    } else if (valueProp === maxVal) {
+      setIsMax(true)
+      setIsMin(false)
+    }
+
+    handleValueChange(valueProp)  
+  }, [valueProp])
+
+  useEffect(() => {
+    if (control.current === null) return
+
+    control.current.updateMatrixWorld()
+    plane.current.translate(new Vector3(0, 0.25, 0))
+    plane.current.applyMatrix4(control.current.matrixWorld)
+  }, [control])
+
+  const dragBind = useGesture({
+    onDragStart: ({ event }) => {
+      event.stopPropagation()
+      
       if (orbit.current?.enableRotate) orbit.current.enableRotate = false
     },
     onDrag: ({ event, direction: [x,y] }) => {
@@ -78,25 +83,24 @@ const RotaryKnob: FC<KnobProps> = ({
       || knob.current === null
       || (x === 0 && y === 0)) return
 
-      const planeIntersect = new Vector3()
-      
       // @ts-ignore Property does not exist
-      event.ray.intersectPlane(plane.current, planeIntersect)
+      event.ray.intersectPlane(plane.current, planeIntersect.current)
       
       const knobPos = knob.current.localToWorld(new Vector3())
-      
-      planeIntersect.applyQuaternion(invertQuaternion(control.current.quaternion))
-      knobPos.applyQuaternion(invertQuaternion(control.current.quaternion))
+
+      const invQuat = invertQuaternion(control.current.quaternion)
+      planeIntersect.current.applyQuaternion(invQuat)
+      knobPos.applyQuaternion(invQuat)
 
       const newDeg = radToDeg(Math.atan2(
-        knobPos.z - planeIntersect.z, 
-        knobPos.x - planeIntersect.x
+        knobPos.z - planeIntersect.current.z, 
+        knobPos.x - planeIntersect.current.x
       )) - 180 
       
       if (startDeg.current === null) startDeg.current = newDeg
       
       // offset new rotation by the distance to the old one so the knob stays in place on click
-      const rotationDiff = endDeg.current - startDeg.current
+      const rotationDiff = endDeg.current! - startDeg.current
       const newCorrectedDeg = clip360(newDeg + rotationDiff) // 0-360
       const symDeg = smod(newCorrectedDeg, 360) // -180-180
       
@@ -130,27 +134,53 @@ const RotaryKnob: FC<KnobProps> = ({
       const newVal = degToVal(symDeg)
       handleValueChange(newVal)
     },
-    onDragEnd: () => {
+    onDragEnd: ({ event }) => {
+      event.stopPropagation()
+
       if (orbit.current) orbit.current.enableZoom = true
-      dragging.current = false
       startDeg.current = null
       endDeg.current = radToDeg(-knob.current!.rotation.y)
     },
     ...handleInteraction(orbit.current),
   })
 
-  const handleValueChange = (value: number) => {
-    setInternalVal(value)
+  const wheelBind = useGesture({
+    onWheelStart: ({ event }) => {
+      event.stopPropagation()
+
+      if (orbit.current) orbit.current.enableZoom = false
+    },
+    onWheel: ({ event, direction: [_, y] }) => {  
+      event.stopPropagation()
+
+      if (knob.current === null) return
+
+      const newDeg = radToDeg(knob.current.rotation.y) - y * 3
+      knob.current.rotation.y = degToRad(clamp(newDeg, minDeg, maxDeg))
+
+      const newVal = degToVal(knob.current.rotation.y)
+      handleValueChange(newVal)
+    },
+    onWheelEnd: ({ event }) => {
+      event.stopPropagation()
+      
+      endDeg.current = radToDeg(-knob.current!.rotation.y)
+      if (orbit.current) orbit.current.enableZoom = true
+    }
+  })
+
+  const handleValueChange = (newValue: number) => {
+    setInternalVal(newValue)
 
     if (typeof onChange === 'function') {
       // suppress changes in value caused by trying to drag the knob out of bounds
       if (internalVal === maxVal
       || internalVal === minVal
-      || prevInternalVal === value) return
+      || newValue === prevInternalVal) return
 
       onChange({ 
         ...(id) && {id}, 
-        value: value 
+        value: newValue 
       })
     }
   }
@@ -162,7 +192,8 @@ const RotaryKnob: FC<KnobProps> = ({
     >
       <group
         ref={knob}
-        {...bind() as any} 
+        {...dragBind() as any} 
+        {...wheelBind() as any} 
       >
         <mesh>
           <cylinderBufferGeometry args={[1, 1, 1, 64]}/>

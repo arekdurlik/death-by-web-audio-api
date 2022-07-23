@@ -1,4 +1,4 @@
-import { getSteps } from '../../../utils'
+import { getSteps } from '../../../../helpers'
 import { RotarySwitchConfig, RotarySwitchInit } from './types'
 
 export const initializeRotarySwitch = (
@@ -9,7 +9,7 @@ export const initializeRotarySwitch = (
     stop = false, 
     lowerStepBound = null, 
     upperStepBound = null, 
-    baseStep = 0, 
+    initialStep = 0, 
     minVal = null, 
     maxVal = null 
   } = {...defaults}
@@ -32,7 +32,7 @@ export const initializeRotarySwitch = (
     stop,
     lowerStepBound,
     upperStepBound,
-    baseStep,
+    initialStep,
     steps, 
     stepDegrees, 
     stepValues,

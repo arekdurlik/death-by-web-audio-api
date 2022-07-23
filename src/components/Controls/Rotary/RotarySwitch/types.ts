@@ -11,7 +11,7 @@ export type RotarySwitchConfig = {
   stop?: boolean
   lowerStepBound?: number,
   upperStepBound?: number,
-  baseStep?: number,
+  initialStep?: number,
   value?: number
 } 
 
@@ -19,7 +19,7 @@ export type RotarySwitchInit = {
   stop: boolean
   lowerStepBound: number | null
   upperStepBound: number | null
-  baseStep: number
+  initialStep: number
   steps: number
   stepDegrees: Array<number> 
   stepValues: Array<number> 

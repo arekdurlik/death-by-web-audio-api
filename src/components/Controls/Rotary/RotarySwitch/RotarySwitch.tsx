@@ -5,32 +5,34 @@ import { RotarySwitchInit, RotarySwitchProps } from './types'
 import { handleInteraction } from '../../../utils'
 import { useSpring, a } from '@react-spring/three'
 import { useOrbit } from '../../../../contexts/OrbitContext'
-import { clip360, invertQuaternion, smod } from '../../../../helpers'
+import { clamp, clip360, invertQuaternion, smod } from '../../../../helpers'
 import { Plane, Vector3 } from 'three'
 import { degToRad, radToDeg } from 'three/src/math/MathUtils'
 import { usePrevious } from '../../../../hooks/usePrevious'
 
-const RotarySwitch: FC<RotarySwitchProps> = ({ 
-  id, 
-  onChange, 
-  defaults, 
-  ...props 
+const RotarySwitch: FC<RotarySwitchProps> = ({
+  id, defaults, step: stepProp, onChange, ...props
 }) => {
-   const [{
-    stop, lowerStepBound, upperStepBound, baseStep, steps, stepValues, stepDegrees, stepGap
-   }, setInit]= useState({} as RotarySwitchInit)
+  const [{
+    stop, lowerStepBound, upperStepBound, initialStep, steps, stepValues, stepDegrees, stepGap
+  }, setInit] = useState({} as RotarySwitchInit)
+  const [internalStep, setInternalStep] = useState(0)
   const [correctedDeg, setCorrectedDeg] = useState(0)
   const prevCorrectedDeg = usePrevious(correctedDeg)
+
   const totalDegrees = useRef(0)
   const plane = useRef(new Plane(new Vector3(0, 1, 0), 0))
+  const planeIntersect = useRef(new Vector3())
   const control = useRef<THREE.Group | null>(null)
   const knob = useRef<THREE.Group>(null)
-  const step = useRef(0)
-  const orbit = useOrbit()
   const dragging = useRef(false)
+  const delayScroll = useRef(false)
   const startDeg = useRef<number | null>(null)
-  const planeOffset = 0.25
-  const [{ rotation }, spring ] = useSpring(() => ({
+  const firstStep = lowerStepBound ? lowerStepBound : 0
+  const lastStep = upperStepBound ? upperStepBound : steps - 1
+
+  const orbit = useOrbit()
+  const [{ rotation }, spring] = useSpring(() => ({
     rotation: 0, config: RotarySwitchSpring
   }))
 
@@ -39,26 +41,33 @@ const RotarySwitch: FC<RotarySwitchProps> = ({
   }, [])
 
   useEffect(() => {
-    if (stepDegrees === undefined
-    || baseStep === undefined) return
+    if (stepDegrees === undefined || initialStep === undefined) return
 
-    totalDegrees.current = stepDegrees[baseStep]
-    step.current = baseStep
-    spring.set({ rotation: degToRad(totalDegrees.current) })
-  }, [stepDegrees, baseStep, spring])
+    const initialDegrees = stepDegrees[initialStep]
+    handleStepChange(initialStep, initialDegrees, false)
+  }, [initialStep, stepDegrees, spring])
 
   useEffect(() => {
-    if (control.current === null) return
+    if (stepProp === undefined || stepProp === internalStep) return
+
+    const clampedStep = clamp(stepProp, firstStep, lastStep)
+    const newDegrees = stepDegrees[clampedStep]
+    handleStepChange(clampedStep, newDegrees, false)
+  }, [stepProp])
+
+  useEffect(() => {
+    if (control.current === null || knob.current === null) return
 
     control.current.updateMatrixWorld()
-    plane.current.translate(new Vector3(0, planeOffset, 0))
+    plane.current.translate(new Vector3(0, 0.25, 0))
     plane.current.applyMatrix4(control.current.matrixWorld)
-  }, [control])
+  }, [control, knob])
 
-  const bind = useGesture({
-    onDragStart: () => {
+  const dragBind = useGesture({
+    onDragStart: ({ event }) => {
+      event.stopPropagation()
+
       dragging.current = true
-      if (orbit.current?.enableRotate) orbit.current.enableRotate = false
     },
     onDrag: ({ event, direction: [x,y] }) => {
       event.stopPropagation()
@@ -67,19 +76,18 @@ const RotarySwitch: FC<RotarySwitchProps> = ({
       || control.current === null
       || (x === 0 && y === 0)) return
 
-      const planeIntersect = new Vector3()
-      
       // @ts-ignore Property does not exist
-      event.ray.intersectPlane(plane.current, planeIntersect)
+      event.ray.intersectPlane(plane.current, planeIntersect.current)
 
       const knobPos = knob.current.localToWorld(new Vector3())
-
-      planeIntersect.applyQuaternion(invertQuaternion(control.current.quaternion))
-      knobPos.applyQuaternion(invertQuaternion(control.current.quaternion))
+      
+      const invQuat = invertQuaternion(control.current.quaternion)
+      planeIntersect.current.applyQuaternion(invQuat)
+      knobPos.applyQuaternion(invQuat)
 
       const newDeg = radToDeg(Math.atan2(
-        knobPos.z - planeIntersect.z, 
-        knobPos.x - planeIntersect.x
+        knobPos.z - planeIntersect.current.z, 
+        knobPos.x - planeIntersect.current.x
       )) - 180 
       
       const newCorrectedDeg = clip360(newDeg)
@@ -87,46 +95,86 @@ const RotarySwitch: FC<RotarySwitchProps> = ({
       
       if (startDeg.current === null) startDeg.current = newCorrectedDeg
       
-      const offset = smod(clip360(-startDeg.current + newCorrectedDeg), 360)
+      const dragOffset = smod(clip360(-startDeg.current + newCorrectedDeg), 360)
       const difference = prevCorrectedDeg - newCorrectedDeg
       const direction = difference < 0 ? 'cw' : difference > 0 ? 'ccw' : null
-      const firstStep = lowerStepBound ? lowerStepBound : 0
-      const lastStep = upperStepBound ? upperStepBound : steps - 1
+      
+      let newStep: number, newRotation: number
 
       // check if switch can enter next position
-      if (direction === 'cw' && offset > stepGap) {
+      if (direction === 'cw' && dragOffset > stepGap) {
         startDeg.current = null
-
-        if (stop && step.current === lastStep) return
-        
-        step.current = (step.current + 1) % steps
-        totalDegrees.current -= stepGap
-      } else if (direction === 'ccw' && offset < -stepGap) {
+        newStep = (internalStep + 1) % steps
+        newRotation = totalDegrees.current - stepGap
+      } else if (direction === 'ccw' && dragOffset < -stepGap) {
         startDeg.current = null
-
-        if (stop && step.current === firstStep) return
-        
-        step.current = (step.current + steps - 1) % steps
-        totalDegrees.current += stepGap
+        newStep = (internalStep + steps - 1) % steps
+        newRotation = totalDegrees.current + stepGap
       } else return
 
-      spring.start({ rotation: degToRad(totalDegrees.current) })
-      handleStepChange()
+      handleStepChange(newStep, newRotation)
     },
-    onDragEnd: () => {
-      if (orbit.current) orbit.current.enableZoom = true
+    onDragEnd: ({ event }) => {
+      event.stopPropagation()
+      
       startDeg.current = null
       dragging.current = false
     },
     ...handleInteraction(orbit.current)
   })
+
+  const wheelBind = useGesture({
+    onWheelStart: ({ event }) => {
+      event.stopPropagation()
+
+      if (orbit.current) orbit.current.enableZoom = false
+    },
+    onWheel: ({ event, direction: [_, y] }) => {  
+      event.stopPropagation()
+
+      if (delayScroll.current) return
+      delayScroll.current = true
+      
+      const direction = y === 1 ? 'cw' : 'ccw'
+      let newStep: number, newRotation: number
+      
+      if (direction === 'cw') {
+        newStep = (internalStep + 1) % steps
+        newRotation = totalDegrees.current - stepGap
+      }  else {
+        newStep = (internalStep + steps - 1) % steps
+        newRotation = totalDegrees.current + stepGap
+      }
+
+      handleStepChange(newStep, newRotation)
+      setTimeout(() => delayScroll.current = false, 200)
+    },
+    onWheelEnd: ({ event }) => {
+      event.stopPropagation()
+
+      if (orbit.current) orbit.current.enableZoom = true
+    }
+  })
   
-  const handleStepChange = () => {
-    
-    if (typeof onChange === 'function') onChange({ 
-      step: step.current, 
-      ...(stepValues.length) && {value: stepValues[step.current]} 
-    })
+  const handleStepChange = (newStep: number, newRotation: number, animate = true) => {
+    if (stop && (internalStep === lastStep || internalStep === firstStep)) return
+
+    setInternalStep(newStep)
+    totalDegrees.current = newRotation
+
+    if (animate) {
+      spring.start({ rotation: degToRad(totalDegrees.current) })
+    } else {
+      spring.set({ rotation: degToRad(totalDegrees.current) })
+    }
+
+    if (typeof onChange === 'function') {
+      onChange({ 
+        ...(id) && {id},
+        step: newStep,
+        ...(stepValues.length) && {value: stepValues[newStep]} 
+      })
+    }
   }
 
   return (
@@ -137,7 +185,8 @@ const RotarySwitch: FC<RotarySwitchProps> = ({
       <a.group 
         ref={knob}
         rotation-y={rotation} 
-        {...bind() as any} 
+        {...dragBind() as any} 
+        {...wheelBind() as any} 
       >
         <mesh>
           <cylinderBufferGeometry args={[1, 1, 1, 64]}/>

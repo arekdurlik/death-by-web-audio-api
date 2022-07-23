@@ -1,12 +1,12 @@
 import { SlideSwitchConfig, SlideSwitchInit } from './types'
-import { getSteps } from '../../../utils'
+import { getSteps } from '../../../../helpers'
 
 export const initializeSlideSwitch = (
   defaults: SlideSwitchConfig | undefined
 ): SlideSwitchInit => {
   const {
     steps = 3,
-    baseStep = 0,
+    initialStep = 1,
     length = 1.9,
     minVal = null,
     maxVal = null
@@ -19,12 +19,12 @@ export const initializeSlideSwitch = (
 
   if (steps === 1) 
     throw new Error('Illegal value for steps in a slide switch')
-  if (baseStep >= steps || baseStep < 0) 
+  if (initialStep >= steps || initialStep < 0) 
     throw new Error('Illegal base value in a slide switch')
 
   return { 
     steps, 
-    baseStep,
+    initialStep,
     startPos, 
     endPos, 
     stepPositions,

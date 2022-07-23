@@ -1,4 +1,5 @@
-import { KnobConfig } from './Rotary/RotaryKnob/types'
+import { GroupProps } from '@react-three/fiber'
+import { RotaryKnobConfig } from './Rotary/RotaryKnob/types'
 import { RotarySwitchConfig } from './Rotary/RotarySwitch/types'
 import { SliderConfig } from './Slider/types'
 import { SlideSwitchConfig } from './Switch/SlideSwitch/types'
@@ -6,24 +7,24 @@ import { SlideSwitchConfig } from './Switch/SlideSwitch/types'
 export type InitialState = {
   [key: string]: {
     type: 'RotaryKnob',
-    defaults: KnobConfig
-    props: any 
+    defaults?: RotaryKnobConfig
+    props?: GroupProps
   } | {
     type: 'RotarySwitch',
-    defaults: RotarySwitchConfig
-    props: any
+    defaults?: RotarySwitchConfig
+    props?: GroupProps
   } | {
     type: 'SlideSwitch',
-    defaults: SlideSwitchConfig
-    props: any
+    defaults?: SlideSwitchConfig
+    props?: GroupProps
   } | {
     type: 'Slider',
-    defaults: SliderConfig
-    props: any
+    defaults?: SliderConfig
+    props?: GroupProps
   }
 }
 
-type ControlConfig = KnobConfig | RotarySwitchConfig | SliderConfig | SlideSwitchConfig
+type ControlConfig = RotaryKnobConfig | RotarySwitchConfig | SliderConfig | SlideSwitchConfig
 
 export type Action = {
   type: string
@@ -37,9 +38,8 @@ export type State = {
   [x: string]: {
     type: string
     value?: number
-    defaults: ControlConfig
-    props?: {
-      [x: string]: any
-    }
+    step?: number,
+    defaults?: ControlConfig
+    props?: GroupProps
   }
 }

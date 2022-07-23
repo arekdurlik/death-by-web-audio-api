@@ -1,12 +1,19 @@
 import update from 'immutability-helper'
 import { useMemo, useReducer } from 'react'
 import RotaryKnob from '../../Controls/Rotary/RotaryKnob/RotaryKnob'
+import RotarySwitch from '../../Controls/Rotary/RotarySwitch/RotarySwitch'
 import SlideSwitch from '../../Controls/Switch/SlideSwitch/SlideSwitch'
+import Slider from '../../Controls/Slider/Slider'
 import { Value } from '../../Controls/Rotary/RotaryKnob/types'
 import { Action, State } from '../../Controls/types'
 import { initialDelayState } from './init'
 
-const availableControls = { RotaryKnob, SlideSwitch }
+const availableControls = {
+  RotaryKnob,
+  RotarySwitch,
+  SlideSwitch,
+  Slider
+}
 
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -14,10 +21,14 @@ const reducer = (state: State, action: Action) => {
       const id = action.payload.id
       if (!id) throw new Error ('ID of value not specified')
       const value = action.payload.value
+      const step = action.payload.step
 
-      return update(state, { [id]: { value: { $set: value }}})
+      return update(state, { [id]: { 
+        ...(value !== undefined) && { value: { $set: value }},
+        ...(step !== undefined) && { step: { $set: step }}
+      }})
     default:
-      return {...state}
+      throw new Error(`Illegal action type "${action.type}" in Delay reducer`)
   } 
 }
 
@@ -41,8 +52,9 @@ const Delay = () => {
       return <Control
         key={index}
         id={id}
-        value={values.value}
         defaults={values.defaults}
+        value={values.value}
+        step={values.step}
         onChange={handleChange}
         {...values.props}
       />
@@ -52,11 +64,6 @@ const Delay = () => {
   return (
     <>
       {Controls}
-      <RotaryKnob
-        onChange={console.log}
-        position={[-3,5,0]}
-        rotation={[Math.PI / 2.3, 0, 0]}
-      />
     </>
   )
 }

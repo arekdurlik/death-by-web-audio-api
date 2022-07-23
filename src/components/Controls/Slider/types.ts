@@ -10,18 +10,19 @@ export type SliderConfig = {
   minVal?: number
   maxVal?: number
   length?: number
-  baseVal?: number
+  initialVal?: number
   curve?: number
 }
 
 export type SliderInit = {
   minVal: number
   maxVal: number
-  baseVal: number
+  initialVal: number
   startPos: number
   endPos: number
   initialPos: number 
   posToVal: Function
+  valToPos: Function
 }
 
 export type Value = {

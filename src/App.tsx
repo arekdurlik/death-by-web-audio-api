@@ -26,21 +26,6 @@ const App = () => {
         <directionalLight position={[1, 1, 1]} />
 
         <OrbitProvider>
-          <RotarySwitch 
-            position={[2, 0, -4]}
-            rotation={[Math.PI / 2.5, 0, Math.PI / 4]}
-            onChange={console.log}
-            />
-          <SlideSwitch
-            position={[0, 0, -2]}
-            onChange={console.log}
-            plane={plane}
-            />
-          <Slider
-            position={[0, 0, 1.5]}
-            rotation={[-Math.PI/2.4, Math.PI/3, Math.PI/3]}
-            onChange={console.log}
-          />
           <Delay />
         </OrbitProvider>
       </Canvas>
